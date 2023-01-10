@@ -45,7 +45,7 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
         plt.plot(SV_delta,choice,'r.')
         plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
         plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
-        plt.ylabel('probability_choice')
+        plt.ylabel('prob_choose_delay')
         plt.xlabel('SV difference (SV_delay - SV_immediate)')
         fig_fn = get_fig_fn(fn)
         print('Saving to : {}'.format(fig_fn))
