@@ -9,25 +9,24 @@ import matplotlib.pyplot as plt
 
 
 
-def fit_delay_discount_model(amt_wait_choice, guesses = [0.15, 0.5],bkbounds = ((0,8),(1e-8,6.4)),disp=False):
-    # We do start the optimizer off with the guesses below, but those aren't updated like Bayesian priors. 
+def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bounds = ((0,8),(1e-8,6.4)),disp=False):
+    # We do start the optimizer off with the guesses above, but those aren't updated like Bayesian priors. 
     # They are simply a starting point in parameter space for the optimizer. Changes here could be an avenue 
     # to explore when seeking to improve performance.
-    # [beta, kappa]
-    # guesses = [0.15, 0.5]
+    # [gamma, kappa]
+    # gk_guess = [0.15, 0.5]
 
-    # These are the bounds on k and beta. The first tuple corresponds to beta, the second to kappa.
-    # (beta, kappa) 
+    # These are the bounds on gamma and kappa. The first tuple corresponds to gamma, the second to kappa.
     # most impulsive person to least impulsive person
     # most patient person >>> lowest kappa
     # least patient person >>> highest kappa
-    # beta = 0, Prob = 0.5
-    # beta = 8 goes to infinity, prob=step function
-    # bkbounds = ((0,8),(1e-8,6.4))
+    # beta = 0, flat prob across SV_delta
+    # beta = 8 approximates a step function at SV_delta = 0
+    # gk_bounds = ((0,8),(1e-8,6.4))
     risk = 1
     # These are the inputs of the local_negLL function. They'll be passed through optimize_me()
 
-    inputs = amt_wait_choice.T.values.tolist()
+    inputs = data_choice_amt_wait.T.values.tolist()
     # print(inputs)
 
     # If seeking to improve performance, could change optimization method, could change maxiter(ations), 
@@ -35,63 +34,63 @@ def fit_delay_discount_model(amt_wait_choice, guesses = [0.15, 0.5],bkbounds = (
     # You might be able to change the distance between steps in the optimzation.
     # results = optimize.minimize(optimize_me,guesses,inputs, bounds = bkbounds,method='L-BFGS-B', 
     #                             tol=1e-5, callback = None, options={'maxiter':10000, 'disp': True})
-    results = optimize.minimize(optimize_me,guesses,inputs,bounds = bkbounds,
-                                method='L-BFGS-B',options={'disp':disp})
+    results = optimize.minimize(optimize_me, gk_guess, inputs, bounds = gk_bounds,
+                                method='L-BFGS-B', options={'disp':disp})
     negLL = results.fun
-    beta = results.x[0]
-    k = results.x[1]
+    gamma = results.x[0]
+    kappa = results.x[1]
     
-    return negLL, beta, k, risk
+    return negLL, gamma, kappa, risk
 
 
-def optimize_me(beta_and_k_array_to_optimize, inputs):
-    choices_list,SS_V,SS_D,LL_V,LL_D,risk = inputs
-    return local_negLL(beta_and_k_array_to_optimize,choices_list,SS_V,SS_D,LL_V,LL_D,risk)
+def optimize_me(gamma_kappa, inputs):
+    choice,value_soon,time_soon,value_delay,time_delay,risk = inputs
+    return function_negLL(choice,value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk)
 
 
-def local_negLL(beta_and_k_array,choices_list,SS_V,SS_D,LL_V,LL_D,risk):
+def function_negLL(choice,value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk):
 
-    ps_list,SS_SV,LL_SV = choice_prob(SS_V,SS_D,LL_V,LL_D,beta_and_k_array,risk)
-    ps = np.array(ps_list)
-    choices = np.array(choices_list)
+    p_delay = probability_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk)[0]
+    p_delay = np.array(p_delay)
+    choice = np.array(choice)
 
     # Trap log(0). This will prevent the code from trying to calculate the log of 0 in the next section.
-    ps[ps==0] = 1e-6
-    ps[ps==1] = 1-1e-6
+    p_delay[p_delay==0] = 1e-6
+    p_delay[p_delay==1] = 1-1e-6
     
     # Log-likelihood
-    err = (choices==1)*np.log(ps) + ((choices==0))*np.log(1-ps)
+    LL = (choice==1)*np.log(p_delay) + ((choice==0))*np.log(1-p_delay)
 
     # Sum of -log-likelihood
-    sumerr = -sum(err)
+    negLL = -sum(LL)
 
-    return sumerr
+    return negLL
 
 
-def choice_prob(SS_V,SS_D,LL_V,LL_D,beta_and_k_array,risk):
-    ps = []
-    SS_SV_list = []
-    LL_SV_list = []
-    for n in range(len(SS_V)):
-        # smaller sooner SV_now
-        SS_SV = discount(SS_V[n],SS_D[n],beta_and_k_array[1],risk[n])
-        # larger later SV_delay
-        LL_SV = discount(LL_V[n],LL_D[n],beta_and_k_array[1],risk[n])
+def probability_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk):
+    p_delay = []
+    SV_soon = []
+    SV_delay = []
+    for i,(vs,ts,vd,td,r) in enumerate(zip(value_soon,time_soon,value_delay,time_delay,risk)):
+        # SV_soon for immediate reward
+        iSV_soon = subjective_value(vs,ts,gamma_kappa[1],r)
+        # SV_delay for larger later 
+        iSV_delay = subjective_value(vd,td,gamma_kappa[1],r)
 
         try: 
-            p = 1 / (1 + math.exp(-beta_and_k_array[0]*(LL_SV-SS_SV)))
+            p = 1 / (1 + math.exp(-gamma_kappa[0]*(iSV_delay-iSV_soon)))
             # p = 1 / (1 + math.exp(beta_and_k_array[0]*(SS_SV-LL_SV)))     ## Math.exp does e^(). In other words, if the smaller-sooner SV is higher than the larger-later SV, e^x will be larger, making the denominator larger, making 1/denom closer to zero (low probability of choosing delay). If the LL SV is higher, the e^x will be lower, making 1/denom close to 1 (high probability of choosing delay). If they are the same, e^0=1, 1/(1+1) = 0.5, 50% chance of choosing delay.
         except OverflowError:                                             ## Sometimes the SS_SV is very much higher than the LL_SV. If beta gets too high, the exponent on e will get huge. Math.exp will throw an OverflowError if the numbers get too big. In that case, 1/(1+[something huge]) is essentially zero, so we just set it to 0.
             p = 0
-        ps.append(p)
-        SS_SV_list.append(SS_SV)
-        LL_SV_list.append(LL_SV)
+        p_delay.append(p)
+        SV_soon.append(iSV_soon)
+        SV_delay.append(iSV_delay)
         
-    return ps,SS_SV_list,LL_SV_list
+    return p_delay,SV_soon,SV_delay
 
 
-def discount(v,d,kappa,risk):
-    SV = (v**risk)/(1+kappa*d)
+def subjective_value(value,delay,kappa,risk):
+    SV = (value**risk)/(1+kappa*delay)
     return SV
 
 
