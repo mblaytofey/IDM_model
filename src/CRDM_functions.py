@@ -49,16 +49,16 @@ def optimize_me(gamma_beta_alpha, inputs):
 
 def function_negLL(gamma_beta_alpha,choice,value_fix,value_ambig,p_fix,p_ambig,ambiguity):
 
-    p_ambig = probability_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha)[0]
-    p_ambig = np.array(p_ambig)
+    p_choose_ambig = probability_choose_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha)[0]
+    p_choose_ambig = np.array(p_choose_ambig)
     choice = np.array(choice)
 
     # Trap log(0). This will prevent the code from trying to calculate the log of 0 in the next section.
-    p_ambig[p_ambig==0] = 1e-6
-    p_ambig[p_ambig==1] = 1-1e-6
+    p_choose_ambig[p_choose_ambig==0] = 1e-6
+    p_choose_ambig[p_choose_ambig==1] = 1-1e-6
     
     # Log-likelihood
-    LL = (choice==1)*np.log(p_ambig) + ((choice==0))*np.log(1-p_ambig)
+    LL = (choice==1)*np.log(p_choose_ambig) + ((choice==0))*np.log(1-p_choose_ambig)
 
     # Sum of -log-likelihood
     negLL = -sum(LL)
@@ -66,8 +66,8 @@ def function_negLL(gamma_beta_alpha,choice,value_fix,value_ambig,p_fix,p_ambig,a
     return negLL
 
 
-def probability_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha):
-    p_ambig = []
+def probability_choose_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha):
+    p_choose_ambig = []
     SV_fix = []
     SV_ambig = []
     ambig_fix = 0
@@ -82,16 +82,16 @@ def probability_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_be
             # p = 1 / (1 + math.exp(beta_and_k_array[0]*(SS_SV-LL_SV)))     ## Math.exp does e^(). In other words, if the smaller-sooner SV is higher than the larger-later SV, e^x will be larger, making the denominator larger, making 1/denom closer to zero (low probability of choosing delay). If the LL SV is higher, the e^x will be lower, making 1/denom close to 1 (high probability of choosing delay). If they are the same, e^0=1, 1/(1+1) = 0.5, 50% chance of choosing delay.
         except OverflowError:                                             ## Sometimes the SS_SV is very much higher than the LL_SV. If beta gets too high, the exponent on e will get huge. Math.exp will throw an OverflowError if the numbers get too big. In that case, 1/(1+[something huge]) is essentially zero, so we just set it to 0.
             p = 0
-        p_ambig.append(p)
+        p_choose_ambig.append(p)
         SV_fix.append(iSV_fix)
         SV_ambig.append(iSV_ambig)
         
-    return p_ambig,SV_fix,SV_ambig
+    return p_choose_ambig,SV_fix,SV_ambig
 
 
 def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
     # subjective value, SV, different when positive and negative
-    if v>0:
+    if value>0:
         SV = (p_win - beta*ambiguity/2) * (value**alpha)
     else:
         SV = (p_win - beta*ambiguity/2) *(-1.0)*(abs(value)**alpha)
@@ -100,25 +100,27 @@ def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
 
 
 
-def analysis(negLL,choices,p_ambig,nb_parms=2):
+def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     # Unrestricted log-likelihood
+    # LL = (choice==1)*np.log(p_ambig) + ((choice==0))*np.log(1-p_ambig)
     LL = -negLL
 
-    # Restricted log-likelihood
-    LL0 = np.sum((choices==1)*math.log(0.5) + (1-(choices==1))*math.log(0.5))
+    # Restricted log-likelihood, baseline comparison
+    # LL0 = np.sum((choice==1)*math.log(0.5) + (1-(choice==1))*math.log(0.5))
+    LL0 = np.sum((choice==1)*math.log(0.5) + (choice==0)*math.log(0.5))
 
     # Akaike Information Criterion
     AIC = -2*LL + 2*nb_parms  #CHANGE TO len(results.x) IF USING A DIFFERENT MODEL (parameters != 2)
 
     # Bayesian information criterion
-    BIC = -2*LL + 2*math.log(len(p_ambig))  #len(results.x)
+    BIC = -2*LL + 2*math.log(len(p_choice))  #len(results.x)
 
     #R squared
     r2 = 1 - LL/LL0
 
     #Percent accuracy
-    parray = np.array(p_ambig) # gets an array of probabilities of choosing the LL choice
-    correct =sum((parray>=0.5)==choices)/len(p_ambig)                                          # LL is 1 in choices, so when the parray is > 0.5 and choices==1, the model has correctly predicted a choice.
+    p = np.array(p_choice) # gets an array of probabilities of choosing the LL choice
+    correct =sum((p>=0.5)==choice)/len(p_choice)                                          # LL is 1 in choices, so when the parray is > 0.5 and choices==1, the model has correctly predicted a choice.
 
     return LL,LL0,AIC,BIC,r2,correct
 

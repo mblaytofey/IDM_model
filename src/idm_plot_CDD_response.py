@@ -3,8 +3,8 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CDD_functions import fit_delay_discount_model,probability_delay
-from CRDM_functions import analysis
+from CDD_functions import fit_delay_discount_model,probability_choose_delay
+from CRDM_functions import GOF_statistics
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
@@ -28,20 +28,20 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
     # extract values from dataframe to lists of values
     choice,value_soon,time_soon,value_delay,time_delay,risk = data_choice_amt_wait.T.values.tolist()
     gamma_kappa = np.array([gamma,kappa])
-    p_delay,SV_soon,SV_delay = probability_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk)
+    p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk)
     SV_delta = [iSV_delay-iSV_soon for (iSV_delay,iSV_soon) in zip(SV_delay,SV_soon)]
-    SV_delta, p_delay, choice = zip(*sorted(zip(SV_delta, p_delay, choice)))
+    SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
     fig_fn = ''
     if gamma>0.001:
         SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
-        SV_delta_x,p_delay_y = zip(*set(zip(SV_delta, p_delay)))
-        SV_delta_x,p_delay_y = zip(*sorted(zip(SV_delta_x,p_delay_y)))
-        spl = make_interp_spline(np.array(SV_delta_x),np.array(p_delay_y),k=2)
+        SV_delta_x,p_choose_delay_y = zip(*set(zip(SV_delta, p_choose_delay)))
+        SV_delta_x,p_choose_delay_y = zip(*sorted(zip(SV_delta_x,p_choose_delay_y)))
+        spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_delay_y),k=2)
         prob_smooth = spl(SV_delta_new)
         plt.figure(index)
         plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
 
-        plt.plot(SV_delta,p_delay,'b:',linewidth=1)
+        plt.plot(SV_delta,p_choose_delay,'b:',linewidth=1)
         plt.plot(SV_delta,choice,'r.')
         plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
         plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
@@ -51,7 +51,7 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
         print('Saving to : {}'.format(fig_fn))
         plt.savefig(fig_fn)
         plt.close(index)
-    return p_delay, fig_fn, choice
+    return p_choose_delay, fig_fn, choice
 
 
 def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
@@ -79,7 +79,7 @@ def main():
     split_dir = '/Users/pizarror/mturk/idm_data/split'
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
     df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','at_bound','LL','LL0',
-               'AIC','BIC','R2','correct','p_delay_span','fig_fn']
+               'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
     gk_bounds = ((0,8),(1e-8,6.4))
     for index,fn in enumerate(cdd_files):
@@ -88,9 +88,8 @@ def main():
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         if not columns_there(cdd_df):
             continue
-        cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
-                'cdd_delay_wait']
 
+        cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt','cdd_delay_wait']
         data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols)
         print('Percent Impulse Choice: {}'.format(percent_impulse))
 
@@ -101,14 +100,14 @@ def main():
         print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
               format(negLL, gamma, kappa))
 
-        p_delay, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
-        LL,LL0,AIC,BIC,R2,correct = analysis(negLL,choice,p_delay,nb_parms=2)
-        p_delay_range = max(p_delay) - min(p_delay)
-        if p_delay_range>0.6:
+        p_choose_delay, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
+        LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
+        p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
+        if p_choose_delay_range>0.6:
             print(correct)
-            print(list(zip(p_delay,choice)))
+            print(list(zip(p_choose_delay,choice)))
         
-        row = [subj,'cdd',percent_impulse,negLL,gamma,kappa,at_bound,LL,LL0,AIC,BIC,R2,correct,p_delay_range,fig_fn]
+        row = [subj,'cdd',percent_impulse,negLL,gamma,kappa,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
     print(df_out)
