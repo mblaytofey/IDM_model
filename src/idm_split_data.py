@@ -15,8 +15,6 @@ def get_by_task(df,task):
     idf = idf[idf.columns.intersection(cols)]
     return idf
 
-
-
 def split_by_task(df):
     df = df[df['idm_task'].notna()]
     # print(list(df))
@@ -29,7 +27,6 @@ def make_dir(this_dir):
     if not os.path.exists(this_dir):
         print('Creating: {}'.format(this_dir))
         os.makedirs(this_dir)
-
 
 def save_df(save_dir,fn_OG,df,task):
     idm_subj = os.path.basename(fn_OG).replace('.csv','')
@@ -46,14 +43,7 @@ def save_df(save_dir,fn_OG,df,task):
         df.to_csv(fn)
 
 
-def main():
-
-    data_dir = '/Users/pizarror/mturk/idm_data/'
-    raw_data = os.path.join(data_dir,'raw')
-    raw_files = glob.glob(os.path.join(raw_data,'*.csv'))
-
-    save_dir = os.path.join(data_dir,'split')
-    tasks = ['crdm','cdd','cpdm']
+def load_split_save(raw_files = [],save_dir = '/tmp/'):
 
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
@@ -77,6 +67,16 @@ def main():
         save_df(save_dir,fn,cpdm_df,'cpdm')
         
         
+
+def main():
+    # Manually define directories here, then call load_split_save()
+    data_dir = '/Users/pizarror/mturk/idm_data/'
+
+    raw_files = glob.glob(os.path.join(data_dir,'raw','*.csv'))
+    save_dir = os.path.join(data_dir,'split')
+
+    load_split_save(raw_files,save_dir) 
+
 
 
 if __name__ == "__main__":

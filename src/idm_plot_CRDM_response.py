@@ -76,8 +76,8 @@ def get_data(df,cols):
     return data,percent_risk
 
 
-def main():
-    split_dir = '/Users/pizarror/mturk/idm_data/split'
+def load_estimate_CRDM_save(split_dir='/tmp/'):
+
     crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm.csv'))
     df_cols = ['subject','task','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
@@ -86,7 +86,7 @@ def main():
     for index,fn in enumerate(crdm_files):
         print(fn)
         subj = os.path.basename(fn).replace('_crdm.csv','')
-        crdm_df = pd.read_csv(fn)#index_col=0 intentionally avoided
+        crdm_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         if not columns_there(crdm_df):
             continue
 
@@ -112,9 +112,19 @@ def main():
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
     print(df_out)
-    df_fn = '/Users/pizarror/mturk/model_results/CRDM_analysis.csv'
+    df_dir = os.path.join(split_dir,'model_results')
+    make_dir(df_dir)
+    batch_name = os.path.basename(split_dir)
+    df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
+    # df_fn = '/Users/pizarror/mturk/model_results/CRDM_analysis.csv'
     print('Saving analysis to : {}'.format(df_fn))
     df_out.to_csv(df_fn)
+
+
+def main():
+    # if running this script on its own, start here
+    split_dir = '/Users/pizarror/mturk/idm_data/split'
+    load_estimate_CRDM_save(split_dir)
 
 if __name__ == "__main__":
     main()
