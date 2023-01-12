@@ -21,7 +21,9 @@ def main():
 	print('I will look for raw .csv files in : {}'.format(input_dir))
 	raw_files = get_raw_files(input_dir)
 
-	print('The results will be saved to : {}'.format(save_dir))
+	print('The results will be saved under directory : {}'.format(save_dir))
+	save_dir = os.path.join(save_dir,os.path.basename(input_dir))
+	print('with batch located in : {}'.format(save_dir))
 	make_dir(save_dir)
 
 	load_split_save(raw_files,save_dir)
