@@ -3,6 +3,7 @@ import glob
 import os,sys
 from idm_split_data import make_dir,load_split_save
 from idm_plot_CRDM_response import load_estimate_CRDM_save
+from idm_plot_CDD_response import load_estimate_CDD_save
 
 def get_user_dir():
 	input_dir = input('What is the input directory, where the raw files are located?\n')
@@ -28,6 +29,7 @@ def main():
 
 	load_split_save(raw_files,save_dir)
 	load_estimate_CRDM_save(split_dir = save_dir)
+	load_estimate_CDD_save(split_dir = save_dir)
 
 
 if __name__ == "__main__":

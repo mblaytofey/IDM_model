@@ -50,7 +50,7 @@ def optimize_me(gamma_kappa, inputs):
 
 def function_negLL(choice,value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha):
 
-    p_choose_delay = probability_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)[0]
+    p_choose_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)[0]
     p_choose_delay = np.array(p_choose_delay)
     choice = np.array(choice)
 

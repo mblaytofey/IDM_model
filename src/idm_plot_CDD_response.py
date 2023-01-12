@@ -75,8 +75,9 @@ def get_data(df,cols):
     return data,percent_impulse
 
 
-def main():
-    split_dir = '/Users/pizarror/mturk/idm_data/split'
+
+def load_estimate_CDD_save(split_dir='/tmp/'):
+
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
     df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
@@ -111,9 +112,22 @@ def main():
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
     print(df_out)
-    df_fn = '/Users/pizarror/mturk/model_results/cdd_analysis.csv'
+    df_dir = os.path.join(split_dir,'model_results')
+    make_dir(df_dir)
+    batch_name = os.path.basename(split_dir)
+    df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
+    # df_fn = '/Users/pizarror/mturk/model_results/CDD_analysis.csv'
     print('Saving analysis to : {}'.format(df_fn))
     df_out.to_csv(df_fn)
+
+
+
+def main():
+    # if running this script on its own, start here
+    split_dir = '/Users/pizarror/mturk/idm_data/split'
+    load_estimate_CDD_save(split_dir)
+
+
 
 if __name__ == "__main__":
     main()
