@@ -104,9 +104,6 @@ def load_estimate_CDD_save(split_dir='/tmp/'):
         p_choose_delay, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
-        if p_choose_delay_range>0.6:
-            print(correct)
-            print(list(zip(p_choose_delay,choice)))
         
         row = [subj,'cdd',percent_impulse,negLL,gamma,kappa,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)

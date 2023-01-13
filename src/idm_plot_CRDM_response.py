@@ -104,9 +104,6 @@ def load_estimate_CRDM_save(split_dir='/tmp/'):
         p_choose_ambig, fig_fn, choice = plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_ambig,nb_parms=3)
         p_choose_ambig_range = max(p_choose_ambig) - min(p_choose_ambig)
-        if p_choose_ambig_range>0.6:
-            print(correct)
-            print(list(zip(p_choose_ambig,choice)))
         
         row = [subj,'CRDM',percent_risk,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_ambig_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
