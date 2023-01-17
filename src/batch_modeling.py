@@ -85,13 +85,13 @@ def main():
 
 	# if a raw file was found, this list will not be empty
 	if not raw_files:
+		print('The path to batch did not have any .csv files for analysis. ')
+		print('Check again : {}'.format(input_dir))
+	else:
 		# split each raw file, model each task
 		load_split_save(raw_files,save_dir)
 		load_estimate_CRDM_save(split_dir = save_dir)
 		load_estimate_CDD_save(split_dir = save_dir)
-	else:
-		print('The path to batch did not have any .csv files for analysis. ')
-		print('Check again : {}'.format(input_dir))
 
 
 if __name__ == "__main__":
