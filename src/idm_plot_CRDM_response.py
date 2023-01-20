@@ -7,6 +7,7 @@ from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
+
 def columns_there(df):
     cols_check = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_top','crdm_lott_bot',
                   'crdm_sure_p','crdm_lott_p','crdm_amb_lev']
@@ -17,11 +18,13 @@ def columns_there(df):
     # print('All columns present')
     return 1
 
+
 def get_fig_fn(fn):
     fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
     make_dir(fig_dir)
     fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
     return fig_fn
+
 
 def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha):
     # extract values from dataframe to lists of values
@@ -62,6 +65,7 @@ def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
     elif alpha  in gba_bounds[2]:
         at_bound = 1
     return at_bound
+
 
 def get_data(df,cols):
     # combining top and bottom values into amount column
@@ -122,6 +126,7 @@ def main():
     # if running this script on its own, start here
     split_dir = '/Users/pizarror/mturk/idm_data/split'
     load_estimate_CRDM_save(split_dir)
+
 
 if __name__ == "__main__":
     main()

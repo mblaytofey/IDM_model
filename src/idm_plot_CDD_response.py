@@ -8,6 +8,7 @@ from CRDM_functions import GOF_statistics
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
+
 def columns_there(df):
     cols_check = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
                   'cdd_delay_wait']
@@ -18,11 +19,13 @@ def columns_there(df):
     # print('All columns present')
     return 1
 
+
 def get_fig_fn(fn):
     fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
     make_dir(fig_dir)
     fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
     return fig_fn
+
 
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
     # extract values from dataframe to lists of values
@@ -62,6 +65,7 @@ def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
         at_bound = 1
     return at_bound
 
+
 def get_data(df,cols):
     # select from columns
     data = df[cols]
@@ -73,7 +77,6 @@ def get_data(df,cols):
     data['cdd_trial_resp.corr'] = 1.0 - data['cdd_trial_resp.corr']
     percent_impulse = 1.0 - 1.0*data['cdd_trial_resp.corr'].sum()/data['cdd_trial_resp.corr'].shape[0]
     return data,percent_impulse
-
 
 
 def load_estimate_CDD_save(split_dir='/tmp/'):
