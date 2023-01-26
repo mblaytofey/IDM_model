@@ -57,8 +57,7 @@ __status__ = 'Dev'
 def get_user_input():
 	input_dir = input('What is the input directory? Where are the raw files located?\n')
 	save_dir = input('What is the output directory? Where will the results be saved?\n')
-	use_alpha = input('Model CDD task with alpha estimated from corresponding CRDM [True/False]:\n')
-	return input_dir,save_dir,use_alpha
+	return input_dir,save_dir
 
 
 def get_raw_files(input_dir):
@@ -90,9 +89,13 @@ def main():
 		print('Check again : {}'.format(input_dir))
 	else:
 		# split each raw file, model each task
-		load_split_save(raw_files,save_dir)
-		load_estimate_CRDM_save(split_dir = save_dir)
-		load_estimate_CDD_save(split_dir = save_dir)
+		total_split,counter = load_split_save(raw_files,save_dir)
+		if counter==0:
+			print('Somehow we could not split any of the files, try again')
+			sys.exit()
+		else:
+			load_estimate_CRDM_save(split_dir = save_dir)
+			load_estimate_CDD_save(split_dir = save_dir)
 
 
 if __name__ == "__main__":

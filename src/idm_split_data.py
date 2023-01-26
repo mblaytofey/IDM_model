@@ -44,7 +44,7 @@ def save_df(save_dir,fn_OG,df,task):
 
 
 def load_split_save(raw_files = [],save_dir = '/tmp/'):
-
+    counter = 0
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
             print(fn)
@@ -65,7 +65,14 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         save_df(save_dir,fn,crdm_df,'crdm')
         save_df(save_dir,fn,cdd_df,'cdd')
         save_df(save_dir,fn,cpdm_df,'cpdm')
-        
+
+        counter+=1
+
+    success=True
+    if counter<index:
+        # We did not split all raw files, have to check  
+        success=False
+    return success,counter,index
         
 
 def main():
