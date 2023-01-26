@@ -12,7 +12,10 @@ def get_by_task(df,task):
     # select columns with task name in it, such as cdd_trial_type, etc.
     header = get_header()
     cols = header + [c for c in list(df) if task in c]
-    idf = idf[idf.columns.intersection(cols)]
+    try:
+        idf = idf[idf.columns.intersection(cols)]
+    except Exception as err :
+        print('Unexpected {err=}, type(err)=')
     return idf
 
 def split_by_task(df):
@@ -60,6 +63,7 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         if df.shape[1]<100:
             print('Not right number of columns, shape {}'.format(df.shape))
             continue
+
         crdm_df,cdd_df,cpdm_df = split_by_task(df)
         
         save_df(save_dir,fn,crdm_df,'crdm')
@@ -67,12 +71,14 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         save_df(save_dir,fn,cpdm_df,'cpdm')
 
         counter+=1
+    
+    total_split=True
 
-    success=True
     if counter<index:
-        # We did not split all raw files, have to check  
-        success=False
-    return success,counter,index
+        # We did not split all raw files, have to check
+        print('For some reason we only split {} of {} files, please check the log files'.format(counter,index))
+        total_split=False
+    return total_split,counter
         
 
 def main():
