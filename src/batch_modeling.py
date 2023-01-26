@@ -54,10 +54,11 @@ __email__ = 'ricardo.pizarro@nih.gov, silvia.lopezguzman@nih.gov'
 __status__ = 'Dev'
 
 
-def get_user_dir():
+def get_user_input():
 	input_dir = input('What is the input directory? Where are the raw files located?\n')
 	save_dir = input('What is the output directory? Where will the results be saved?\n')
-	return input_dir,save_dir
+	use_alpha = input('Model CDD task with alpha estimated from corresponding CRDM [True/False]:\n')
+	return input_dir,save_dir,use_alpha
 
 
 def get_raw_files(input_dir):
@@ -69,7 +70,7 @@ def get_raw_files(input_dir):
 
 def main():
 	# get paths to directories from the user
-	input_dir,save_dir = get_user_dir()
+	input_dir,save_dir = get_user_input()
 
 	# search for .csv files under input_dir and store them as a list under raw_files
 	print('I will look for raw .csv files in : {}'.format(input_dir))
