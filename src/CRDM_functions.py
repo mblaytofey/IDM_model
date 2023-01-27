@@ -99,16 +99,14 @@ def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
 
 
 
-
 def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     # Unrestricted log-likelihood
     # LL = (choice==1)*np.log(p_ambig) + ((choice==0))*np.log(1-p_ambig)
     LL = -negLL
 
     # Restricted log-likelihood, baseline comparison
-    LL0 = np.sum((choice==1)*math.log(0.5) + (1-(choice==1))*math.log(0.5))
-    # LL0 = np.sum((choice==1)*math.log(0.5) + (choice==0)*math.log(0.5))
-
+    LL0 = np.sum(sum(choice)*np.log(0.5) + sum(choice)*np.log(0.5))
+    
     # Akaike Information Criterion
     AIC = -2*LL + 2*nb_parms  #CHANGE TO len(results.x) IF USING A DIFFERENT MODEL (parameters != 2)
 
@@ -117,10 +115,11 @@ def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
 
     #R squared
     r2 = 1 - LL/LL0
+    # r2 = 1 - (math.exp(LL-LL0))**(-2/len(choice))
 
     #Percent accuracy
     p = np.array(p_choice) # gets an array of probabilities of choosing the LL choice
-    correct =sum((p>=0.5)==choice)/len(p_choice)                                          # LL is 1 in choices, so when the parray is > 0.5 and choices==1, the model has correctly predicted a choice.
+    correct = sum((p>=0.5)==choice)/len(p_choice)                                          # LL is 1 in choices, so when the parray is > 0.5 and choices==1, the model has correctly predicted a choice.
 
     return LL,LL0,AIC,BIC,r2,correct
 

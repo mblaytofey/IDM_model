@@ -102,8 +102,12 @@ def main():
 		else:
 			_alpha=input('We modeled {} CRDM files, do you want to use CRDM alpha (risk parameter) for CDD, when possible? y/n: '.format(CRDM_counter))
 			alpha= _alpha.lower() == 'y'
+			if alpha:
+				print('We will proceed by using alpha from CRDM as a risk parameter in CDD')
+			else:
+				print('We will proceed by modeling CDD without risk, setting alpha=1')
 			load_estimate_CDD_save(split_dir=save_dir,alpha=alpha)
-
+			
 if __name__ == "__main__":
 	# main will be executed after running the script
     main()
