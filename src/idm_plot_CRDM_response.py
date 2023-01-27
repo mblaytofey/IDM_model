@@ -87,6 +87,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/'):
     df_out = pd.DataFrame(columns=df_cols)
     # gamma, beta, alpha bounds
     gba_bounds = ((0,8),(1e-8,6.4),(1e-8,6.4))
+    counter = 0
     for index,fn in enumerate(crdm_files):
         print(fn)
         subj = os.path.basename(fn).replace('_crdm.csv','')
@@ -112,14 +113,23 @@ def load_estimate_CRDM_save(split_dir='/tmp/'):
         row = [subj,'CRDM',percent_risk,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_ambig_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
-    print(df_out)
+
+        counter += 1
+
+    total_modeled=True
+    if counter<index:
+        # We did not anaklyze all CRDM files, have to check
+        print('For some reason we only modeled CRDM for {} of {} files, please check the log files'.format(counter,index))
+        total_modeled=False
+
     df_dir = os.path.join(split_dir,'model_results')
     make_dir(df_dir)
     batch_name = os.path.basename(split_dir)
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
-    # df_fn = '/Users/pizarror/mturk/model_results/CRDM_analysis.csv'
     print('Saving analysis to : {}'.format(df_fn))
     df_out.to_csv(df_fn)
+
+    return total_modeled,counter
 
 
 def main():
