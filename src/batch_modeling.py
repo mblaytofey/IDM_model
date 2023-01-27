@@ -88,15 +88,21 @@ def main():
 		print('The path to batch did not have any .csv files for analysis. ')
 		print('Check again : {}'.format(input_dir))
 	else:
-		# split each raw file, model each task
-		total_split,counter = load_split_save(raw_files,save_dir)
-		if counter==0:
+		# split each raw file
+		total_split,split_counter = load_split_save(raw_files,save_dir)
+		if split_counter==0:
 			print('Somehow we could not split any of the files, try again')
 			sys.exit()
 		else:
-			load_estimate_CRDM_save(split_dir = save_dir)
-			load_estimate_CDD_save(split_dir = save_dir)
-
+			# model CRDM and CDD tasks
+			total_modeled,CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
+		if CRDM_counter==0:
+			print('Zero CRDM files were modeled, we will try with CDD')
+			load_estimate_CDD_save(split_dir=save_dir,alpha=False)
+		else:
+			_alpha=input('We modeled {} CRDM files, do you want to use CRDM alpha (risk parameter) for CDD, when possible? y/n: '.format(CRDM_counter))
+			alpha= _alpha.lower() == 'y'
+			load_estimate_CDD_save(split_dir=save_dir,alpha=alpha)
 
 if __name__ == "__main__":
 	# main will be executed after running the script
