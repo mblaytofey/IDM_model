@@ -79,7 +79,7 @@ def get_data(df,cols):
     return data,percent_impulse
 
 
-def load_estimate_CDD_save(split_dir='/tmp/'):
+def load_estimate_CDD_save(split_dir='/tmp/',alpha=False):
 
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
     df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','at_bound','LL','LL0',

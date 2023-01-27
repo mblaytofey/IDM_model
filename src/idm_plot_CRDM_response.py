@@ -15,7 +15,6 @@ def columns_there(df):
         if c not in list(df):
             print('Moving on to next subject, we could not find column : {}'.format(c))
             return 0
-    # print('All columns present')
     return 1
 
 
@@ -86,6 +85,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/'):
     df_cols = ['subject','task','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
+    # gamma, beta, alpha bounds
     gba_bounds = ((0,8),(1e-8,6.4),(1e-8,6.4))
     for index,fn in enumerate(crdm_files):
         print(fn)
