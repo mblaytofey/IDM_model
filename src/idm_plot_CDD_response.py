@@ -83,7 +83,11 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     CRDM_fn = os.path.join(model_dir,'{}_CRDM_analysis.csv'.format(batch_name))
     CRDM_df = pd.read_csv(CRDM_fn,index_col=0)
     # using .loc function to find the alpha value, but still need get item
-    alpha_hat = CRDM_df.loc[CRDM_df['subject']==subject,'alpha'].item()
+    try:
+        alpha_hat = CRDM_df.loc[CRDM_df['subject']==subject,'alpha'].item()
+    except ValueError:
+        print('We have a ValueError, will just set alpha to 1.0')
+        alpha_hat = 1.0
     return alpha_hat
 
 
