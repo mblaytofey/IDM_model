@@ -29,9 +29,9 @@ def get_fig_fn(fn):
 
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
     # extract values from dataframe to lists of values
-    choice,value_soon,time_soon,value_delay,time_delay,risk = data_choice_amt_wait.T.values.tolist()
+    choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
     gamma_kappa = np.array([gamma,kappa])
-    p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,risk)
+    p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)
     SV_delta = [iSV_delay-iSV_soon for (iSV_delay,iSV_soon) in zip(SV_delay,SV_soon)]
     SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
     fig_fn = ''
@@ -66,40 +66,62 @@ def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
     return at_bound
 
 
-def get_data(df,cols):
+def get_data(df,cols,alpha_hat=1):
     # select from columns
     data = df[cols]
     # drop rows with NA int them
     data = data.dropna()
-    # add risk column, will change later
-    data['risk']=1.0
+    # add alpha column, will change later
+    data['alpha']=alpha_hat
     # resp.corr = 0 is lottery, resp.corr = 1 is safe $5
     data['cdd_trial_resp.corr'] = 1.0 - data['cdd_trial_resp.corr']
     percent_impulse = 1.0 - 1.0*data['cdd_trial_resp.corr'].sum()/data['cdd_trial_resp.corr'].shape[0]
     return data,percent_impulse
 
 
-def load_estimate_CDD_save(split_dir='/tmp/',alpha=False):
+def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
+    CRDM_fn = os.path.join(model_dir,'{}_CRDM_analysis.csv'.format(batch_name))
+    CRDM_df = pd.read_csv(CRDM_fn,index_col=0)
+    # using .loc function to find the alpha value, but still need get item
+    alpha_hat = CRDM_df.loc[CRDM_df['subject']==subject,'alpha'].item()
+    return alpha_hat
+
+
+def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
 
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
-    df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','at_bound','LL','LL0',
+    df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
+
+    df_dir = os.path.join(split_dir,'model_results')
+    make_dir(df_dir)
+    batch_name = os.path.basename(split_dir)
+    df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
+    if use_alpha:
+        df_fn = df_fn.replace('.csv','_alpha.csv')
+
     gk_bounds = ((0,8),(1e-8,6.4))
     for index,fn in enumerate(cdd_files):
         print(fn)
-        subj = os.path.basename(fn).replace('_cdd.csv','')
+        subject = os.path.basename(fn).replace('_cdd.csv','')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         if not columns_there(cdd_df):
             continue
-
+        
+        # default value if not using alpha for modeling
+        alpha_hat=1
+        if use_alpha:
+            alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
+            print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
         cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt','cdd_delay_wait']
-        data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols)
+        data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols,alpha_hat=alpha_hat)
         print('Percent Impulse Choice: {}'.format(percent_impulse))
 
-        negLL,gamma,kappa,risk = fit_delay_discount_model(data_choice_amt_wait,
+        negLL,gamma,kappa = fit_delay_discount_model(data_choice_amt_wait,
                                                           gk_guess = [0.15, 0.5],
-                                                          gk_bounds = gk_bounds,disp=False)
+                                                          gk_bounds = gk_bounds,
+                                                          disp=False)
         at_bound = check_to_bound(gamma,kappa,gk_bounds=gk_bounds)
         print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
               format(negLL, gamma, kappa))
@@ -108,15 +130,10 @@ def load_estimate_CDD_save(split_dir='/tmp/',alpha=False):
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         
-        row = [subj,'cdd',percent_impulse,negLL,gamma,kappa,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
+        row = [subject,'cdd',percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
-    print(df_out)
-    df_dir = os.path.join(split_dir,'model_results')
-    make_dir(df_dir)
-    batch_name = os.path.basename(split_dir)
-    df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
-    # df_fn = '/Users/pizarror/mturk/model_results/CDD_analysis.csv'
+
     print('Saving analysis to : {}'.format(df_fn))
     df_out.to_csv(df_fn)
 

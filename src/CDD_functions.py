@@ -23,7 +23,7 @@ def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bou
     # beta = 0, flat prob across SV_delta
     # beta = 8 approximates a step function at SV_delta = 0
     # gk_bounds = ((0,8),(1e-8,6.4))
-    alpha = 1
+    # alpha = 1
     # These are the inputs of the local_negLL function. They'll be passed through optimize_me()
 
     inputs = data_choice_amt_wait.T.values.tolist()
@@ -40,7 +40,7 @@ def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bou
     gamma = results.x[0]
     kappa = results.x[1]
     
-    return negLL, gamma, kappa, alpha
+    return negLL, gamma, kappa
 
 
 def optimize_me(gamma_kappa, inputs):

@@ -90,15 +90,17 @@ def main():
 	else:
 		# split each raw file
 		total_split,split_counter = load_split_save(raw_files,save_dir)
+
 		if split_counter==0:
 			print('Somehow we could not split any of the files, try again')
 			sys.exit()
 		else:
 			# model CRDM and CDD tasks
 			total_modeled,CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
+
 		if CRDM_counter==0:
 			print('Zero CRDM files were modeled, we will try with CDD')
-			load_estimate_CDD_save(split_dir=save_dir,alpha=False)
+			alpha=False
 		else:
 			_alpha=input('We modeled {} CRDM files, do you want to use CRDM alpha (risk parameter) for CDD, when possible? y/n: '.format(CRDM_counter))
 			alpha= _alpha.lower() == 'y'
@@ -106,7 +108,8 @@ def main():
 				print('We will proceed by using alpha from CRDM as a risk parameter in CDD')
 			else:
 				print('We will proceed by modeling CDD without risk, setting alpha=1')
-			load_estimate_CDD_save(split_dir=save_dir,alpha=alpha)
+
+		load_estimate_CDD_save(split_dir=save_dir,use_alpha=alpha)
 			
 if __name__ == "__main__":
 	# main will be executed after running the script
