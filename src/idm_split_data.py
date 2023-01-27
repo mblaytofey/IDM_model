@@ -71,13 +71,14 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         save_df(save_dir,fn,cpdm_df,'cpdm')
 
         counter+=1
-    
+
     total_split=True
 
     if counter<index:
         # We did not split all raw files, have to check
         print('For some reason we only split {} of {} files, please check the log files'.format(counter,index))
         total_split=False
+        
     return total_split,counter
         
 
