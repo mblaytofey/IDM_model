@@ -27,13 +27,27 @@ def get_fig_fn(fn):
     return fig_fn
 
 
+def store_SV(fn,df,SV):
+    # res = list(zip(*test_list))
+    SV_delta,SV_soon,SV_delay = list(zip(*SV))
+    practice = df['cdd_trial_type'].value_counts()['practice']
+    # data['column_name'].value_counts()[value]
+    df['SV_soon'] = practice*['practice']+list(SV_soon)
+    df['SV_delay'] = practice*['practice']+list(SV_delay)
+    df['SV_delta'] = practice*['practice']+list(SV_delta)
+    fn = fn.replace('.csv','_SV_hat.csv')
+    print('We will rewrite CDD file to : {}'.format(fn))
+    df.to_csv(fn)
+
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
     # extract values from dataframe to lists of values
     choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
     gamma_kappa = np.array([gamma,kappa])
     p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)
     SV_delta = [iSV_delay-iSV_soon for (iSV_delay,iSV_soon) in zip(SV_delay,SV_soon)]
-    SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
+    SV_delta,SV_soon,SV_delay, p_choose_delay, choice = zip(*sorted(zip(SV_delta,SV_soon,SV_delay, p_choose_delay, choice)))
+    # for saving
+    SV = zip(SV_delta,SV_soon,SV_delay)
     fig_fn = ''
     if gamma>0.001:
         SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
@@ -54,7 +68,7 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
         print('Saving to : {}'.format(fig_fn))
         plt.savefig(fig_fn)
         plt.close(index)
-    return p_choose_delay, fig_fn, choice
+    return p_choose_delay, SV, fig_fn, choice
 
 
 def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
@@ -93,6 +107,7 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
 
 def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
 
+    # Search for CDD files in the split_dir
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
     df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
@@ -105,8 +120,9 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
     if use_alpha:
         df_fn = df_fn.replace('.csv','_alpha.csv')
 
-    gk_bounds = ((0,8),(1e-8,6.4))
+    gk_bounds = ((0,8),(1e-3,8))
     for index,fn in enumerate(cdd_files):
+        # Load the CDD file and do some checks
         print(fn)
         subject = os.path.basename(fn).replace('_cdd.csv','')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
@@ -122,15 +138,17 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
         data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols,alpha_hat=alpha_hat)
         print('Percent Impulse Choice: {}'.format(percent_impulse))
 
+        # Estimate gamma and kappa with or without alpha
         negLL,gamma,kappa = fit_delay_discount_model(data_choice_amt_wait,
                                                           gk_guess = [0.15, 0.5],
-                                                          gk_bounds = gk_bounds,
-                                                          disp=False)
+                                                          gk_bounds = gk_bounds, disp=False)
+
         at_bound = check_to_bound(gamma,kappa,gk_bounds=gk_bounds)
         print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
               format(negLL, gamma, kappa))
 
-        p_choose_delay, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
+        p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
+        store_SV(fn,cdd_df,SV)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         
@@ -138,6 +156,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
+    # Save modeled parameters to modeled results
     print('Saving analysis to : {}'.format(df_fn))
     df_out.to_csv(df_fn)
 
