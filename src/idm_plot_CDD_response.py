@@ -27,16 +27,29 @@ def get_fig_fn(fn):
     return fig_fn
 
 
-def store_SV(fn,df,SV):
-    # res = list(zip(*test_list))
-    SV_delta,SV_soon,SV_delay = list(zip(*SV))
+def store_SV(fn,df,SV,alpha_hat=False):
+    SV_delta = SV
     practice = df['cdd_trial_type'].value_counts()['practice']
-    # data['column_name'].value_counts()[value]
-    df['SV_soon'] = practice*['practice']+list(SV_soon)
-    df['SV_delay'] = practice*['practice']+list(SV_delay)
-    df['SV_delta'] = practice*['practice']+list(SV_delta)
-    fn = fn.replace('.csv','_SV_hat.csv')
-    print('We will rewrite CDD file to : {}'.format(fn))
+    task = df['cdd_trial_type'].value_counts()['task']
+    if task != len(list(SV_delta)):
+        print('Somehow the number of tasks and length of subject values are different')
+        raise ValueError
+
+    try:
+        df['SV_delta'] = practice*['']+list(SV_delta)
+    except ValueError:
+        print('We found a ValueError, please inspect spreadsheet and try again')
+        sys.exit()
+    df_out = df.loc[df['cdd_trial_type']=='task',['cdd_conf_resp.keys','SV_delta']].reset_index(drop=True)
+    df_out['confidence'] = df_out['cdd_conf_resp.keys']*df_out['SV_delta']/df_out['SV_delta'].abs()
+    df_out.drop(columns=['cdd_conf_resp.keys'],inplace=True)
+    print(df_out)
+    sys.exit()
+    if alpha_hat:
+        fn = fn.replace('.csv','_SV_hat_alpha.csv')
+    else:
+        fn = fn.replace('.csv','_SV_hat.csv')
+    print('We will save columns of interestest from CDD file to : {}'.format(fn))
     df.to_csv(fn)
 
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
@@ -45,9 +58,10 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
     gamma_kappa = np.array([gamma,kappa])
     p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)
     SV_delta = [iSV_delay-iSV_soon for (iSV_delay,iSV_soon) in zip(SV_delay,SV_soon)]
-    SV_delta,SV_soon,SV_delay, p_choose_delay, choice = zip(*sorted(zip(SV_delta,SV_soon,SV_delay, p_choose_delay, choice)))
     # for saving
-    SV = zip(SV_delta,SV_soon,SV_delay)
+    SV = SV_delta
+    # sorted for plotting
+    SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
     fig_fn = ''
     if gamma>0.001:
         SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
@@ -148,7 +162,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
               format(negLL, gamma, kappa))
 
         p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
-        store_SV(fn,cdd_df,SV)
+        store_SV(fn,cdd_df,SV,alpha_hat=alpha_hat)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         
