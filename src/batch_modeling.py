@@ -60,11 +60,12 @@ def get_user_input():
 	return input_dir,save_dir
 
 
-def get_raw_files(input_dir):
+def get_raw_files(input_dir,verbose=False):
 	# search under input_dir for raw .csv files
 	raw_files = glob.glob(os.path.join(input_dir,'*.csv'))
-	print('I found the following files to be analyzed:')
-	print(raw_files)
+	if verbose:
+		print('I found the following files to be analyzed:')
+		print(raw_files)
 	return raw_files
 
 def main():

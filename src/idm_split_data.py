@@ -26,12 +26,13 @@ def split_by_task(df):
     cpdm_df = get_by_task(df,'cpdm')
     return crdm_df,cdd_df,cpdm_df
 
-def make_dir(this_dir):
+def make_dir(this_dir,verbose=False):
     if not os.path.exists(this_dir):
-        print('Creating: {}'.format(this_dir))
+        if verbose:
+            print('Creating: {}'.format(this_dir))
         os.makedirs(this_dir)
 
-def save_df(save_dir,fn_OG,df,task):
+def save_df(save_dir,fn_OG,df,task='crdm',verbose=False):
     idm_subj = os.path.basename(fn_OG).replace('.csv','')
     subj_dir = os.path.join(save_dir,idm_subj)
     make_dir(subj_dir)
@@ -42,7 +43,8 @@ def save_df(save_dir,fn_OG,df,task):
         print('Selection returned null, check data and try again')
     else:
         fn = os.path.join(task_dir,'{}_{}.csv'.format(idm_subj,task))
-        print('Saving to: {}'.format(fn))
+        if verbose:
+            print('Saving to: {}'.format(fn))
         df.to_csv(fn)
 
 
@@ -50,7 +52,7 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
     counter = 0
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
-            print(fn)
+            print('We will split the following csv file : \n{}'.format(fn))
         else:
             print('Will move on as we could not find: {}'.format(fn))
             continue
@@ -66,9 +68,9 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
 
         crdm_df,cdd_df,cpdm_df = split_by_task(df)
         
-        save_df(save_dir,fn,crdm_df,'crdm')
-        save_df(save_dir,fn,cdd_df,'cdd')
-        save_df(save_dir,fn,cpdm_df,'cpdm')
+        save_df(save_dir,fn,crdm_df,task='crdm')
+        save_df(save_dir,fn,cdd_df,task='cdd')
+        save_df(save_dir,fn,cpdm_df,task='cpdm')
 
         counter+=1
 

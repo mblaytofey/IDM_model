@@ -16,7 +16,6 @@ def columns_there(df):
         if c not in list(df):
             print('Moving on to next subject, we could not find column : {}'.format(c))
             return 0
-    # print('All columns present')
     return 1
 
 
@@ -27,14 +26,13 @@ def get_fig_fn(fn):
     return fig_fn
 
 
-def store_SV(fn,df,SV,alpha_hat=False):
+def store_SV(fn,df,SV,alpha_hat=False,verbose=False):
     SV_delta = SV
     practice = df['cdd_trial_type'].value_counts()['practice']
     task = df['cdd_trial_type'].value_counts()['task']
     if task != len(list(SV_delta)):
         print('Somehow the number of tasks and length of subject values are different')
         raise ValueError
-
     try:
         df['SV_delta'] = practice*['']+list(SV_delta)
     except ValueError:
@@ -43,16 +41,17 @@ def store_SV(fn,df,SV,alpha_hat=False):
     df_out = df.loc[df['cdd_trial_type']=='task',['cdd_conf_resp.keys','SV_delta']].reset_index(drop=True)
     df_out['confidence'] = df_out['cdd_conf_resp.keys']*df_out['SV_delta']/df_out['SV_delta'].abs()
     df_out.drop(columns=['cdd_conf_resp.keys'],inplace=True)
-    print(df_out)
-    sys.exit()
+    # print(df_out)
     if alpha_hat:
         fn = fn.replace('.csv','_SV_hat_alpha.csv')
     else:
         fn = fn.replace('.csv','_SV_hat.csv')
-    print('We will save columns of interestest from CDD file to : {}'.format(fn))
+    if verbose:
+        print('We will save columns of interestest from CDD file to : {}'.format(fn))
     df.to_csv(fn)
 
-def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
+
+def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,verbose=False):
     # extract values from dataframe to lists of values
     choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
     gamma_kappa = np.array([gamma,kappa])
@@ -79,7 +78,8 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa):
         plt.ylabel('prob_choose_delay')
         plt.xlabel('SV difference (SV_delay - SV_immediate)')
         fig_fn = get_fig_fn(fn)
-        print('Saving to : {}'.format(fig_fn))
+        if verbose:
+            print('Saving to : {}'.format(fig_fn))
         plt.savefig(fig_fn)
         plt.close(index)
     return p_choose_delay, SV, fig_fn, choice
@@ -119,7 +119,7 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     return alpha_hat
 
 
-def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
+def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
 
     # Search for CDD files in the split_dir
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
@@ -137,7 +137,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
     gk_bounds = ((0,8),(1e-3,8))
     for index,fn in enumerate(cdd_files):
         # Load the CDD file and do some checks
-        print(fn)
+        print('Working on the following CDD csv file :\n{}'.format(fn))
         subject = os.path.basename(fn).replace('_cdd.csv','')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         if not columns_there(cdd_df):
@@ -147,19 +147,18 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False):
         alpha_hat=1
         if use_alpha:
             alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
-            print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
         cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt','cdd_delay_wait']
         data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols,alpha_hat=alpha_hat)
-        print('Percent Impulse Choice: {}'.format(percent_impulse))
-
         # Estimate gamma and kappa with or without alpha
         negLL,gamma,kappa = fit_delay_discount_model(data_choice_amt_wait,
                                                           gk_guess = [0.15, 0.5],
                                                           gk_bounds = gk_bounds, disp=False)
-
         at_bound = check_to_bound(gamma,kappa,gk_bounds=gk_bounds)
-        print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
-              format(negLL, gamma, kappa))
+        if verbose:
+            print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
+            print('Percent Impulse Choice: {}'.format(percent_impulse))
+            print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
+                  format(negLL, gamma, kappa))
 
         p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
         store_SV(fn,cdd_df,SV,alpha_hat=alpha_hat)
