@@ -105,7 +105,7 @@ def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     LL = -negLL
 
     # Restricted log-likelihood, baseline comparison
-    LL0 = np.sum(sum(choice)*np.log(0.5) + sum(choice)*np.log(0.5))
+    LL0 = np.sum(sum(choice)*np.log(0.5) + (len(choice)-sum(choice))*np.log(0.5)) # + eps(1e-16)
     
     # Akaike Information Criterion
     AIC = -2*LL + 2*nb_parms  #CHANGE TO len(results.x) IF USING A DIFFERENT MODEL (parameters != 2)

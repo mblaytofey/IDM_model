@@ -52,7 +52,7 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
     counter = 0
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
-            print('We will split the following csv file : \n{}'.format(fn))
+            print('We will split and save the following csv file : \n{}'.format(fn))
         else:
             print('Will move on as we could not find: {}'.format(fn))
             continue
