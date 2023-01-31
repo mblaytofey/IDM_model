@@ -136,7 +136,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
                   format(negLL, gamma, kappa))
 
         p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
-        store_SV(fn,cdd_df,SV_delta=SV,task='cdd',alpha_hat=alpha_hat)
+        store_SV(fn,cdd_df,SV_delta=SV,task='cdd',use_alpha=use_alpha)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         

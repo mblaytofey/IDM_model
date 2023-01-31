@@ -120,7 +120,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
                   format(negLL, gamma, beta, alpha))
 
         p_choose_ambig, SV, fig_fn, choice = plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha)
-        store_SV(fn,crdm_df,SV_delta=SV,task='crdm',alpha_hat=False)
+        store_SV(fn,crdm_df,SV,task='crdm',use_alpha=False)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_ambig,nb_parms=3)
         p_choose_ambig_range = max(p_choose_ambig) - min(p_choose_ambig)
         
