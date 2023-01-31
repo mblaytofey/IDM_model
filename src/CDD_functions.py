@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 
-def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bounds = ((0,8),(1e-8,6.4)),disp=False):
+def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bounds = ((0,8),(1e-3,8)),disp=False):
     # We do start the optimizer off with the guesses above, but those aren't updated like Bayesian priors. 
     # They are simply a starting point in parameter space for the optimizer. Changes here could be an avenue 
     # to explore when seeking to improve performance.
@@ -96,6 +96,39 @@ def SV_discount(value,delay,kappa,alpha):
 
 # Hessian unavailable in this optimization function, but would use results.hess_inv here
 #Tester line if you want: print("LL",LL,"AIC",AIC,"BIC",BIC,"R2",r2,"correct",correct)
+
+
+# written generically for task so we can use for CDD and CRDM
+# This will save two columns for each subject: confidence and SV_delta
+# These outputs will be used by Corey Zimba for modeling confidence
+def store_SV(fn,df,SV,task='cdd',alpha_hat=False,verbose=False):
+    # task specific columns
+    trial_type = '{}_trial_type'.format(task)
+    conf_resp = '{}_conf_resp.keys'.format(task)
+    SV_delta = SV
+    practice = df[trial_type].value_counts()['practice']
+    task = df[trial_type].value_counts()['task']
+    if task != len(list(SV_delta)):
+        print('Somehow the number of tasks and length of subject values are different')
+        raise ValueError
+    try:
+        df['SV_delta'] = practice*['']+list(SV_delta)
+    except ValueError:
+        print('We found a ValueError, please inspect spreadsheet and try again')
+        sys.exit()
+    df_out = df.loc[df[trial_type]=='task',[conf_resp,'SV_delta']].reset_index(drop=True)
+    df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
+    df_out.drop(columns=[conf_resp],inplace=True)
+    # print(df_out)
+    if alpha_hat:
+        fn = fn.replace('.csv','_SV_hat_alpha.csv')
+    else:
+        fn = fn.replace('.csv','_SV_hat.csv')
+    if verbose:
+        print('We will save columns of interestest from {} file to : {}'.format(task.upper(),fn))
+    df.to_csv(fn)
+
+
 
 def main(args):
     print(args)

@@ -3,7 +3,7 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CDD_functions import fit_delay_discount_model,probability_choose_delay
+from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV
 from CRDM_functions import GOF_statistics
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
@@ -24,31 +24,6 @@ def get_fig_fn(fn):
     make_dir(fig_dir)
     fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
     return fig_fn
-
-
-def store_SV(fn,df,SV,alpha_hat=False,verbose=False):
-    SV_delta = SV
-    practice = df['cdd_trial_type'].value_counts()['practice']
-    task = df['cdd_trial_type'].value_counts()['task']
-    if task != len(list(SV_delta)):
-        print('Somehow the number of tasks and length of subject values are different')
-        raise ValueError
-    try:
-        df['SV_delta'] = practice*['']+list(SV_delta)
-    except ValueError:
-        print('We found a ValueError, please inspect spreadsheet and try again')
-        sys.exit()
-    df_out = df.loc[df['cdd_trial_type']=='task',['cdd_conf_resp.keys','SV_delta']].reset_index(drop=True)
-    df_out['confidence'] = df_out['cdd_conf_resp.keys']*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out.drop(columns=['cdd_conf_resp.keys'],inplace=True)
-    # print(df_out)
-    if alpha_hat:
-        fn = fn.replace('.csv','_SV_hat_alpha.csv')
-    else:
-        fn = fn.replace('.csv','_SV_hat.csv')
-    if verbose:
-        print('We will save columns of interestest from CDD file to : {}'.format(fn))
-    df.to_csv(fn)
 
 
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,verbose=False):
@@ -161,7 +136,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
                   format(negLL, gamma, kappa))
 
         p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
-        store_SV(fn,cdd_df,SV,alpha_hat=alpha_hat)
+        store_SV(fn,cdd_df,SV_delta=SV,task='cdd',alpha_hat=alpha_hat)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         
