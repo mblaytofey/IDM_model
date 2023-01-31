@@ -19,14 +19,18 @@ def columns_there(df):
     return 1
 
 
-def get_fig_fn(fn):
+def get_fig_fn(fn,use_alpha=False):
     fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
     make_dir(fig_dir)
-    fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
+    if use_alpha:
+        fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit_alpha.png'))
+    else:
+        fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
+
     return fig_fn
 
 
-def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,verbose=False):
+def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=False,verbose=False):
     # extract values from dataframe to lists of values
     choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
     gamma_kappa = np.array([gamma,kappa])
@@ -52,7 +56,7 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,verbose=False):
         plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
         plt.ylabel('prob_choose_delay')
         plt.xlabel('SV difference (SV_delay - SV_immediate)')
-        fig_fn = get_fig_fn(fn)
+        fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
         if verbose:
             print('Saving to : {}'.format(fig_fn))
         plt.savefig(fig_fn)
@@ -135,7 +139,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
             print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
                   format(negLL, gamma, kappa))
 
-        p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa)
+        p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=use_alpha)
         store_SV(fn,cdd_df,SV_delta=SV,task='cdd',use_alpha=use_alpha)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
