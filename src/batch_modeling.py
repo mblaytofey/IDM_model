@@ -100,7 +100,7 @@ def main():
 
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, check if any get modeled, then ask if user wants to use alpha
-	total_modeled,CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
+	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
 	if CRDM_counter==0:
 		print('Zero CRDM files were modeled, we will try with CDD')
 		alpha=False

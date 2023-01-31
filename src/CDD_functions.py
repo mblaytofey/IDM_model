@@ -101,11 +101,11 @@ def SV_discount(value,delay,kappa,alpha):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV,task='cdd',alpha_hat=False,verbose=False):
+def store_SV(fn,df,SV_delta,task='cdd',alpha_hat=False,verbose=False):
     # task specific columns
     trial_type = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
-    SV_delta = SV
+
     practice = df[trial_type].value_counts()['practice']
     task = df[trial_type].value_counts()['task']
     if task != len(list(SV_delta)):
@@ -125,8 +125,8 @@ def store_SV(fn,df,SV,task='cdd',alpha_hat=False,verbose=False):
     else:
         fn = fn.replace('.csv','_SV_hat.csv')
     if verbose:
-        print('We will save columns of interestest from {} file to : {}'.format(task.upper(),fn))
-    df.to_csv(fn)
+        print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
+    df_out.to_csv(fn,index=False)
 
 
 
