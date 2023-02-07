@@ -3,7 +3,7 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics
+from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics,get_data
 from CDD_functions import store_SV
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
@@ -69,19 +69,6 @@ def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
     elif alpha  in gba_bounds[2]:
         at_bound = 1
     return at_bound
-
-
-def get_data(df,cols):
-    # combining top and bottom values into amount column
-    df['crdm_lott_amt'] = df['crdm_lott_top'] + df['crdm_lott_bot']
-    # select from columns
-    data = df[cols]
-    # drop rows with NA int them
-    data = data.dropna()
-    # resp.corr = 0 is lottery, resp.corr = 1 is safe $5
-    data['crdm_trial_resp.corr'] = 1.0 - data['crdm_trial_resp.corr']
-    percent_risk = 1.0 - 1.0*data['crdm_trial_resp.corr'].sum()/data['crdm_trial_resp.corr'].shape[0]
-    return data,percent_risk
 
 
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):

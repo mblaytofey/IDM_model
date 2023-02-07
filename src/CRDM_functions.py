@@ -98,6 +98,18 @@ def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
     return SV
 
 
+def get_data(df,cols):
+    # combining top and bottom values into amount column
+    df['crdm_lott_amt'] = df['crdm_lott_top'] + df['crdm_lott_bot']
+    # select from columns
+    data = df[cols]
+    # drop rows with NA int them
+    data = data.dropna()
+    # resp.corr = 0 is lottery, resp.corr = 1 is safe $5
+    data['crdm_trial_resp.corr'] = 1.0 - data['crdm_trial_resp.corr']
+    percent_risk = 1.0 - 1.0*data['crdm_trial_resp.corr'].sum()/data['crdm_trial_resp.corr'].shape[0]
+    return data,percent_risk
+
 
 def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     # Unrestricted log-likelihood

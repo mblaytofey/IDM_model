@@ -3,7 +3,7 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV
+from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV,get_data
 from CRDM_functions import GOF_statistics
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
@@ -71,19 +71,6 @@ def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
     elif kappa  in gk_bounds[1]:
         at_bound = 1
     return at_bound
-
-
-def get_data(df,cols,alpha_hat=1):
-    # select from columns
-    data = df[cols]
-    # drop rows with NA int them
-    data = data.dropna()
-    # add alpha column, will change later
-    data['alpha']=alpha_hat
-    # resp.corr = 0 is lottery, resp.corr = 1 is safe $5
-    data['cdd_trial_resp.corr'] = 1.0 - data['cdd_trial_resp.corr']
-    percent_impulse = 1.0 - 1.0*data['cdd_trial_resp.corr'].sum()/data['cdd_trial_resp.corr'].shape[0]
-    return data,percent_impulse
 
 
 def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
