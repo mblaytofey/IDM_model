@@ -10,7 +10,7 @@ from scipy.interpolate import make_interp_spline, BSpline
 
 
 def columns_there(df):
-    cols_check = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_top','crdm_lott_bot',
+    cols_check = ['crdm_trial_resp.corr','crdm_lott_top','crdm_lott_bot',
                   'crdm_sure_p','crdm_lott_p','crdm_amb_lev']
     for c in cols_check:
         if c not in list(df):
@@ -73,7 +73,7 @@ def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
 
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
 
-    crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm.csv'))
+    crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm*.csv'))
     df_cols = ['subject','task','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
@@ -84,13 +84,14 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds
-    gba_bounds = ((0,8),(1e-8,6.4),(1e-8,6.4))
+    gba_bounds = ((0,8),(1e-8,6.4),(0.125,4.341))
     counter = 0
     for index,fn in enumerate(crdm_files):
         # Load the CDD file and do some checks
         print('Working on the following CRDM csv file :\n{}'.format(fn))
         subject = os.path.basename(fn).replace('_crdm.csv','')
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally avoided
+
         if not columns_there(crdm_df):
             continue
 
@@ -98,7 +99,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
         data_choice_sure_lott_amb,percent_risk = get_data(crdm_df,cols)
         # Estimate gamma, beta, and alpha
         negLL,gamma,beta,alpha = fit_ambiguity_risk_model(data_choice_sure_lott_amb,
-                                                          gba_guess = [0.15, 0.5, 0.5],
+                                                          gba_guess = [0.15, 0.5, 0.6],
                                                           gba_bounds = gba_bounds,disp=False)
         at_bound = check_to_bound(gamma,beta,alpha,gba_bounds=gba_bounds)
         if verbose:
@@ -126,7 +127,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
 
 def main():
     # if running this script on its own, start here
-    split_dir = '/Users/pizarror/mturk/idm_data/split'
+    # split_dir = '/Users/pizarror/mturk/idm_data/split'
+    # one time hack
+    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
     load_estimate_CRDM_save(split_dir)
 
 

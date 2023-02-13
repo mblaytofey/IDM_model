@@ -100,7 +100,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
     if use_alpha:
         df_fn = df_fn.replace('.csv','_alpha.csv')
 
-    gk_bounds = ((0,8),(1e-3,8))
+    gk_bounds = ((0,8),(0.0022,7.875))
     for index,fn in enumerate(cdd_files):
         # Load the CDD file and do some checks
         print('Working on the following CDD csv file :\n{}'.format(fn))

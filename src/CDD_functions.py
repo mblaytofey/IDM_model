@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 
-def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bounds = ((0,8),(1e-3,8)),disp=False):
+def fit_delay_discount_model(data_choice_amt_wait, gk_guess = [0.15, 0.5],gk_bounds = ((0,8),(0.0022,7.875)),disp=False):
     # We do start the optimizer off with the guesses above, but those aren't updated like Bayesian priors. 
     # They are simply a starting point in parameter space for the optimizer. Changes here could be an avenue 
     # to explore when seeking to improve performance.
