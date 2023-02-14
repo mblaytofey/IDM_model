@@ -18,6 +18,21 @@ def columns_there(df):
             return 0
     return 1
 
+def gen_trial_type(df):
+    practice = ['practice']*df['crdm_pract_trials.thisTrialN'].count()
+    task = ['task']*df['crdm_trials.thisN'].count()
+    df['crdm_trial_type'] = practice+task
+    return df
+
+def rename_columns(df):
+    df = gen_trial_type(df)
+    cols = ['sure_amt','sure_p','lott_top','lott_bot','lott_p','amb_lev']
+    crdm_cols = ['crdm_{}'.format(c) for c in cols]
+    cols_dict = dict([(k,v) for (k,v) in zip(cols,crdm_cols)])
+    df.rename(columns=cols_dict,inplace=True)
+    return df
+
+
 
 def get_fig_fn(fn):
     fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
@@ -36,27 +51,26 @@ def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False)
     SV = SV_delta
     # sorted for plotting
     SV_delta, p_choose_ambig, choice = zip(*sorted(zip(SV_delta, p_choose_ambig, choice)))
-    fig_fn = ''
-    if gamma>0.001:
-        SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
-        SV_delta_x,p_choose_ambig_y = zip(*set(zip(SV_delta, p_choose_ambig)))
-        SV_delta_x,p_choose_ambig_y = zip(*sorted(zip(SV_delta_x,p_choose_ambig_y)))
-        spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_ambig_y),k=2)
-        prob_smooth = spl(SV_delta_new)
-        plt.figure(index)
-        plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
 
-        plt.plot(SV_delta,p_choose_ambig,'b:',linewidth=1)
-        plt.plot(SV_delta,choice,'r.')
-        plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
-        plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
-        plt.ylabel('prob_choose_ambig')
-        plt.xlabel('SV difference (SV_lottery - SV_fixed)')
-        fig_fn = get_fig_fn(fn)
-        if verbose:
-            print('Saving to : {}'.format(fig_fn))
-        plt.savefig(fig_fn)
-        plt.close(index)
+    fig_fn = get_fig_fn(fn)
+    plt.figure(index)
+    SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
+    SV_delta_x,p_choose_ambig_y = zip(*set(zip(SV_delta, p_choose_ambig)))
+    SV_delta_x,p_choose_ambig_y = zip(*sorted(zip(SV_delta_x,p_choose_ambig_y)))
+    spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_ambig_y),k=2)
+    prob_smooth = spl(SV_delta_new)
+    plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
+    plt.plot(SV_delta,p_choose_ambig,'b:',linewidth=1)
+    plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
+    plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
+    plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
+    plt.ylabel('prob_choose_ambig',fontsize=12)
+    plt.xlabel('SV difference (SV_lottery - SV_fixed)',fontsize=12)
+    if verbose:
+        plt.title(get_subject(fn),fontsize=15)
+        print('Saving to : {}'.format(fig_fn))
+    plt.savefig(fig_fn)
+    plt.close(index)        
     return p_choose_ambig, SV,fig_fn, choice
 
 
@@ -71,9 +85,14 @@ def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
     return at_bound
 
 
+def get_subject(fn):
+    return os.path.basename(fn).replace('_crdm.csv','')
+
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
 
     crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm*.csv'))
+    crdm_files = [f for f in crdm_files if 'SV_hat.csv' not in f]
+
     df_cols = ['subject','task','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
@@ -89,11 +108,20 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     for index,fn in enumerate(crdm_files):
         # Load the CDD file and do some checks
         print('Working on the following CRDM csv file :\n{}'.format(fn))
-        subject = os.path.basename(fn).replace('_crdm.csv','')
+        subject = get_subject(fn)
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally avoided
+        crdm_df = crdm_df[crdm_df['crdm_conf_resp.rt'].notna()]
 
         if not columns_there(crdm_df):
-            continue
+            # hack for columns not being named properly, check again
+            print('Checking if renaming columns work')
+            crdm_df = rename_columns(crdm_df)
+            if not columns_there(crdm_df):
+                print('Tried renaming and did not work, check .csv file and try again')
+                continue
+            elif verbose:
+                print('Renaming worked, we will continue as such')
+                print(crdm_df)
 
         cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
         data_choice_sure_lott_amb,percent_risk = get_data(crdm_df,cols)
@@ -107,7 +135,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
             print("Negative log-likelihood: {}, gamma: {}, beta: {}, alpha: {}".
                   format(negLL, gamma, beta, alpha))
 
-        p_choose_ambig, SV, fig_fn, choice = plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha)
+        p_choose_ambig, SV, fig_fn, choice = plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=verbose)
         store_SV(fn,crdm_df,SV,task='crdm',use_alpha=False)
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_ambig,nb_parms=3)
         p_choose_ambig_range = max(p_choose_ambig) - min(p_choose_ambig)
@@ -130,7 +158,7 @@ def main():
     # split_dir = '/Users/pizarror/mturk/idm_data/split'
     # one time hack
     split_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
-    load_estimate_CRDM_save(split_dir)
+    load_estimate_CRDM_save(split_dir,verbose=True)
 
 
 if __name__ == "__main__":

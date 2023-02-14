@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 
 
 
-def fit_ambiguity_risk_model(data_choice_sure_lott_amb, gba_guess = [1, 0.5, 0.5],
-                             gba_bounds = ((0,8),(1e-8,6.4),(1e-8,6.4)),disp=False):
+def fit_ambiguity_risk_model(data_choice_sure_lott_amb, gba_guess = [1, 0.5, 0.6],
+                             gba_bounds = ((0,8),(1e-8,6.4),(0.125,4.341)),disp=False):
     # We do start the optimizer off with the guesses.
     # The guesses are a starting point in parameter space for the optimizer. 
 

@@ -132,6 +132,7 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
     df_out = df.loc[df[trial_type]=='task',[conf_resp,'SV_delta']].reset_index(drop=True)
+    df_out = df_out.astype(float)
     df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
     df_out.drop(columns=[conf_resp],inplace=True)
     # print(df_out)
