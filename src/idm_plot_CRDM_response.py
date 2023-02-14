@@ -35,10 +35,12 @@ def rename_columns(df):
 
 
 def get_fig_fn(fn):
-    fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
-    make_dir(fig_dir)
-    fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
-    return fig_fn
+    # fig_dir = os.path.dirname(fn) #.replace('idm_data/split/','figs/model/')
+    split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
+    # make_dir(fig_dir)
+    fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
+    # fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
+    return split_dir,fig_fn
 
 
 def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False):
@@ -52,7 +54,7 @@ def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False)
     # sorted for plotting
     SV_delta, p_choose_ambig, choice = zip(*sorted(zip(SV_delta, p_choose_ambig, choice)))
 
-    fig_fn = get_fig_fn(fn)
+    split_dir,fig_fn = get_fig_fn(fn)
     plt.figure(index)
     SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
     SV_delta_x,p_choose_ambig_y = zip(*set(zip(SV_delta, p_choose_ambig)))
@@ -68,9 +70,9 @@ def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False)
     plt.xlabel('SV difference (SV_lottery - SV_fixed)',fontsize=12)
     if verbose:
         plt.title(get_subject(fn),fontsize=15)
-        print('Saving to : {}'.format(fig_fn))
-    plt.savefig(fig_fn)
-    plt.close(index)        
+        print('Saving to : /split_dir/ {}'.format(fig_fn))
+    plt.savefig(os.path.join(split_dir,fig_fn))
+    plt.close(index)
     return p_choose_ambig, SV,fig_fn, choice
 
 
@@ -89,7 +91,8 @@ def get_subject(fn):
     return os.path.basename(fn).replace('_crdm.csv','')
 
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
-
+    if verbose:
+        print('We are working under /split_dir/ : {}'.format(split_dir))
     crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm*.csv'))
     crdm_files = [f for f in crdm_files if 'SV_hat.csv' not in f]
 
@@ -97,8 +100,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
-    df_dir = os.path.join(split_dir,'model_results')
-    make_dir(df_dir)
+    df_dir = split_dir
     batch_name = os.path.basename(split_dir)
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
