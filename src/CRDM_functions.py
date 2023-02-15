@@ -129,13 +129,28 @@ def drop_non_responses(df):
         print('**ERROR** Found too many trial_resp.keys : {}'.format(keys_cols))
         print('Check your file and try again')
         sys.exit()
-    
+
+    response_rate=1.0
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
+        response_rate -= float(non_responses_nb)/df['responded'].shape[0]
+        print('\n**WARNING** We dropped {0} of {1} non responses, resulting in response_rate of : {2:0.3f}\n'.format(non_responses_nb,df['responded'].shape[0],response_rate))
         df = df.loc[df['responded'],:].reset_index(drop=True)
-        print('We dropped the following number of non responses : {}'.format(non_responses_nb))
-    return df
+    return df,response_rate
 
+
+def get_subject(fn,task='crdm'):
+    return os.path.basename(fn).replace('_{}.csv'.format(task),'')
+
+
+
+def get_fig_fn(fn,use_alpha=False):
+    split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
+    if use_alpha:
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
+    else:
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
+    return split_dir,fig_fn
 
 
 def get_data(df,cols):

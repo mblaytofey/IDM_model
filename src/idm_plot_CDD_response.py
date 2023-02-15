@@ -4,7 +4,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV,get_data
-from CRDM_functions import GOF_statistics
+from CRDM_functions import GOF_statistics,drop_non_responses
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
@@ -18,7 +18,7 @@ def columns_there(df):
             return 0
     return 1
 
-
+'''
 def get_fig_fn(fn,use_alpha=False):
     fig_dir = os.path.dirname(fn).replace('idm_data/split/','figs/model/')
     make_dir(fig_dir)
@@ -28,6 +28,7 @@ def get_fig_fn(fn,use_alpha=False):
         fig_fn = os.path.join(fig_dir,os.path.basename(fn).replace('.csv','_model_fit.png'))
 
     return fig_fn
+'''
 
 
 def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=False,verbose=False):
@@ -40,27 +41,29 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=False,verbose=
     SV = SV_delta
     # sorted for plotting
     SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
-    fig_fn = ''
-    if gamma>0.001:
-        SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
-        SV_delta_x,p_choose_delay_y = zip(*set(zip(SV_delta, p_choose_delay)))
-        SV_delta_x,p_choose_delay_y = zip(*sorted(zip(SV_delta_x,p_choose_delay_y)))
-        spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_delay_y),k=2)
-        prob_smooth = spl(SV_delta_new)
-        plt.figure(index)
-        plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
 
-        plt.plot(SV_delta,p_choose_delay,'b:',linewidth=1)
-        plt.plot(SV_delta,choice,'r.')
-        plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
-        plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
-        plt.ylabel('prob_choose_delay')
-        plt.xlabel('SV difference (SV_delay - SV_immediate)')
-        fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
-        if verbose:
-            print('Saving to : {}'.format(fig_fn))
-        plt.savefig(fig_fn)
-        plt.close(index)
+    split_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
+    plt.figure(index)
+
+    SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
+    SV_delta_x,p_choose_delay_y = zip(*set(zip(SV_delta, p_choose_delay)))
+    SV_delta_x,p_choose_delay_y = zip(*sorted(zip(SV_delta_x,p_choose_delay_y)))
+    spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_delay_y),k=2)
+    prob_smooth = spl(SV_delta_new)
+
+    plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
+    plt.plot(SV_delta,p_choose_delay,'b:',linewidth=1)
+    plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
+    plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
+    plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
+
+    plt.ylabel('prob_choose_delay',fontsize=12)
+    plt.xlabel('SV difference (SV_delay - SV_immediate)',fontsize=12)
+    if verbose:
+        plt.title(get_subject(fn,task='cdd'),fontsize=15)
+        print('Saving to : /split_dir/ {}'.format(fig_fn))
+    plt.savefig(os.path.join(split_dir,fig_fn))
+    plt.close(index)
     return p_choose_delay, SV, fig_fn, choice
 
 
@@ -89,12 +92,11 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
 
     # Search for CDD files in the split_dir
     cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
-    df_cols = ['subject','task','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
+    df_cols = ['subject','task','response_rate','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
-    df_dir = os.path.join(split_dir,'model_results')
-    make_dir(df_dir)
+    df_dir = split_dir
     batch_name = os.path.basename(split_dir)
     df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
     if use_alpha:
@@ -104,8 +106,9 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
     for index,fn in enumerate(cdd_files):
         # Load the CDD file and do some checks
         print('Working on the following CDD csv file :\n{}'.format(fn))
-        subject = os.path.basename(fn).replace('_cdd.csv','')
+        subject = get_subject(fn,task='cdd')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
+        cdd_df,response_rate = drop_non_responses(cdd_df)
         if not columns_there(cdd_df):
             continue
         
@@ -131,7 +134,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
         LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
         p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
         
-        row = [subject,'cdd',percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
+        row = [subject,'cdd',response_rate,percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 

@@ -137,10 +137,7 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
-    else:
-        practice_nb = 0
-
-    task_nb = df[trial_type_col].value_counts()['task']
+    
     if task_nb != len(list(SV_delta)):
         print('Somehow the number of tasks and length of subject values are different')
         raise ValueError
