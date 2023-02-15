@@ -19,6 +19,7 @@ def get_by_task(df,task):
     return idf
 
 def split_by_task(df):
+    # drop empty rows intentionally structured to separate tasks
     df = df[df['idm_task'].notna()]
     # print(list(df))
     crdm_df = get_by_task(df,'crdm')

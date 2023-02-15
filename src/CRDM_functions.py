@@ -98,6 +98,46 @@ def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
     return SV
 
 
+def get_task_files(split_dir='/tmp/',task='crdm'):
+    task_files = glob.glob(os.path.join(split_dir,'*/*/*_{}*.csv'.format(task)))
+    task_files = [f for f in task_files if 'SV_hat.csv' not in f]
+    if not task_files:
+        print('\n\n***ERROR***\nThe path to split_dir did not have any .csv files for analysis.\n\n')
+        print('Check input path again and rerun script : {}'.format(split_dir))
+        sys.exit()        
+    return task_files
+
+
+def drop_non_responses(df):
+    keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
+    if not keys_cols:
+        print('We found no column with a trial_resp.keys in the name, check .csv file before continuing. These are the columns names:')
+        print(list(df))
+        sys.exit()
+    if len(keys_cols)==2:
+        # this should be the most common number of keys_cols
+        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna()
+    elif len(keys_cols)==1:
+        print('**WARNING** Only found one trial_resp.keys : {}'.format(keys_cols))
+        print('We will continue with what we have but check to make sure this is what you want')
+        df['responded'] = df[keys_cols[0]].notna()
+    elif len(keys_cols)==3:
+        print('**WARNING** Found three trial_resp.keys : {}'.format(keys_cols))
+        print('We will continue with what we have but check to make sure this is what you want')
+        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna() | df[keys_cols[2]].notna()
+    else:
+        print('**ERROR** Found too many trial_resp.keys : {}'.format(keys_cols))
+        print('Check your file and try again')
+        sys.exit()
+    
+    if not df['responded'].all():
+        non_responses_nb = df['responded'].value_counts()[False]
+        df = df.loc[df['responded'],:].reset_index(drop=True)
+        print('We dropped the following number of non responses : {}'.format(non_responses_nb))
+    return df
+
+
+
 def get_data(df,cols):
     # combining top and bottom values into amount column
     df['crdm_lott_amt'] = df['crdm_lott_top'] + df['crdm_lott_bot']

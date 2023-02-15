@@ -111,27 +111,45 @@ def get_data(df,cols,alpha_hat=1):
     return data,percent_impulse
 
 
+def count_trial_type(df_col=[],trial_type='task'):
+    trial_type_list = df_col.unique()
 
+    if trial_type in trial_type_list:
+        # number of instances for practice
+        try:
+            trial_type_nb = df_col.value_counts()[trial_type]
+        except Exception as err:
+            print(df_col)
+            print('We have an Exception : {}'.format(err))
+            sys.exit()
+    else:
+        trial_type_nb = 0
+
+    return trial_type_nb
 
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
 def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     # task specific columns
-    trial_type = '{}_trial_type'.format(task)
+    trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
 
-    practice = df[trial_type].value_counts()['practice']
-    task = df[trial_type].value_counts()['task']
-    if task != len(list(SV_delta)):
+    practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
+    task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
+    else:
+        practice_nb = 0
+
+    task_nb = df[trial_type_col].value_counts()['task']
+    if task_nb != len(list(SV_delta)):
         print('Somehow the number of tasks and length of subject values are different')
         raise ValueError
     try:
-        df['SV_delta'] = practice*['']+list(SV_delta)
+        df['SV_delta'] = practice_nb*['']+list(SV_delta)
     except ValueError:
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
-    df_out = df.loc[df[trial_type]=='task',[conf_resp,'SV_delta']].reset_index(drop=True)
+    df_out = df.loc[df[trial_type_col]=='task',[conf_resp,'SV_delta']].reset_index(drop=True)
     df_out = df_out.astype(float)
     df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
     df_out.drop(columns=[conf_resp],inplace=True)

@@ -3,7 +3,7 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics,get_data
+from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics,get_data, drop_non_responses, get_task_files
 from CDD_functions import store_SV
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
@@ -93,8 +93,7 @@ def get_subject(fn):
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
-    crdm_files = glob.glob(os.path.join(split_dir,'*/*/*_crdm*.csv'))
-    crdm_files = [f for f in crdm_files if 'SV_hat.csv' not in f]
+    crdm_files = get_task_files(split_dir=split_dir,task='crdm')
 
     df_cols = ['subject','task','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_ambig_span','fig_fn']
@@ -111,8 +110,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
         # Load the CDD file and do some checks
         print('Working on the following CRDM csv file :\n{}'.format(fn))
         subject = get_subject(fn)
-        crdm_df = pd.read_csv(fn) #index_col=0 intentionally avoided
-        crdm_df = crdm_df[crdm_df['crdm_conf_resp.rt'].notna()]
+        crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
+        crdm_df = drop_non_responses(crdm_df)
+        # crdm_df = crdm_df[crdm_df['crdm_conf_resp.rt'].notna()]
 
         if not columns_there(crdm_df):
             # hack for columns not being named properly, check again
@@ -159,7 +159,8 @@ def main():
     # if running this script on its own, start here
     # split_dir = '/Users/pizarror/mturk/idm_data/split'
     # one time hack
-    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
+    # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
+    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
     load_estimate_CRDM_save(split_dir,verbose=True)
 
 
