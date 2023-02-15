@@ -4,7 +4,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV,get_data
-from CRDM_functions import GOF_statistics,drop_non_responses
+from CRDM_functions import GOF_statistics,drop_non_responses,get_subject,get_fig_fn
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
