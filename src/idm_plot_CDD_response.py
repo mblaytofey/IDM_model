@@ -109,6 +109,10 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
         subject = get_subject(fn,task='cdd')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         cdd_df,response_rate = drop_non_responses(cdd_df)
+        if response_rate < 0.05:
+            print('**ERROR** Low response rate, cannot model this subjects CDD data')
+            continue
+
         if not columns_there(cdd_df):
             continue
         

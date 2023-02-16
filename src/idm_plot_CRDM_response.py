@@ -102,7 +102,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
         subject = get_subject(fn,task='crdm')
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
         crdm_df,response_rate = drop_non_responses(crdm_df)
-        # crdm_df = crdm_df[crdm_df['crdm_conf_resp.rt'].notna()]
+        if response_rate < 0.05:
+            print('**ERROR** Low response rate, cannot model this subjects CRDM data')
+            continue
 
         if not columns_there(crdm_df):
             # hack for columns not being named properly, check again

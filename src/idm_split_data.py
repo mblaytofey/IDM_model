@@ -41,7 +41,9 @@ def save_df(save_dir,fn_OG,df,task='crdm',verbose=False):
     make_dir(task_dir)
     
     if df.empty:
-        print('Selection returned null, check data and try again')
+        print('**NullData** Selection returned null, check data and try again')
+    elif df.shape[0] < 10:
+        print('**InsufficientData** Number of rows less than 10, data for {} task is not usable'.format(task.upper()))
     else:
         fn = os.path.join(task_dir,'{}_{}.csv'.format(idm_subj,task))
         if verbose:
@@ -55,16 +57,16 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         if os.path.exists(fn):
             print('We will split and save the following csv file : \n{}'.format(fn))
         else:
-            print('Will move on as we could not find: {}'.format(fn))
+            print('**FileNotFound** Will move on as we could not find: {}'.format(fn))
             continue
         try:
             df = pd.read_csv(fn,index_col=0)
         except:
-            print('Some error continued reading file ...  will move on')
+            print('**WARNING** Some error continued reading file ...  will move on')
             continue
 
         if df.shape[1]<100:
-            print('Not right number of columns, shape {}'.format(df.shape))
+            print('**DataShape** Not right number of columns, shape {}'.format(df.shape))
             continue
 
         crdm_df,cdd_df,cpdm_df = split_by_task(df)
@@ -79,7 +81,7 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
 
     if counter<index:
         # We did not split all raw files, have to check
-        print('For some reason we only split {} of {} files, please check the log files'.format(counter,index))
+        print('**WARNING** For some reason we only split {} of {} files, please check the log files'.format(counter,index))
         total_split=False
         
     return total_split,counter
