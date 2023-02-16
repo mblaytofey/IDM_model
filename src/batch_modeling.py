@@ -68,13 +68,8 @@ def get_raw_files(input_dir,verbose=False):
 		print(raw_files)
 	return raw_files
 
-def main():
-	print('\n\n===BATCH PROCESSING===\n\n')
-	# get paths to directories from the user
-	input_dir,save_dir = get_user_input()
 
-	print('\nI. Raw files :: load, split, and save using BIDS format\n')
-
+def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	# search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
 	raw_files = get_raw_files(input_dir)
@@ -98,23 +93,41 @@ def main():
 		print('\n\n***ERROR***\nSomehow we could not split the csv files, inspect the files and try again.\n\n')
 		sys.exit()
 
-	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
-	# model CRDM tasks, check if any get modeled, then ask if user wants to use alpha
-	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
-	if CRDM_counter==0:
-		print('Zero CRDM files were modeled, we will try with CDD')
-		alpha=False
-	else:
-		_alpha=input('We modeled {} CRDM files, do you want to use CRDM alpha (risk parameter) for CDD, when possible? y/n: '.format(CRDM_counter))
-		alpha= _alpha.lower() == 'y'
-		if alpha:
-			print('We will proceed by using alpha from CRDM as a risk parameter in CDD')
-		else:
-			print('We will proceed by modeling CDD without risk, setting alpha=1')
+	return save_dir
 
-	print('\nIII. Model CDD task :: estimate (with/without alpha), save fit plot, and save parameters \n')
-	# model CDD tasks with or without alpha, depending on user
-	load_estimate_CDD_save(split_dir=save_dir,use_alpha=alpha)
+
+def run_model_CDD(save_dir='/tmp/',CRDM_counter=0):
+	print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
+	load_estimate_CDD_save(split_dir=save_dir,use_alpha=False)
+
+	if CRDM_counter==0:
+		print('**WARNING** Zero CRDM files were modeled, we have no estimate for alpha. All done!')
+		sys.exit()
+	else:
+		print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
+		print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding {} CRDM files'.format(CRDM_counter))
+		load_estimate_CDD_save(split_dir=save_dir,use_alpha=True)
+
+		
+
+
+
+def main():
+
+	print('\n\n===BATCH PROCESSING===\n\n')
+	# get paths to directories from the user
+	input_dir,save_dir = get_user_input()
+
+	print('\nI. Raw files :: load, split, and save using BIDS format\n')
+	save_dir = runp1_load_split_save(input_dir=input_dir,save_dir=save_dir)
+
+	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
+	# model CRDM tasks, count how many files get modeled
+	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
+
+	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
+	run_model_CDD(save_dir=save_dir,CRDM_counter=CRDM_counter)
+
 			
 if __name__ == "__main__":
 	# main will be executed after running the script
