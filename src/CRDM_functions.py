@@ -129,6 +129,8 @@ def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
 def drop_non_responses(df):
     # original length of df before dropping rows
     df_len = df.shape[0]
+    # initialized to avoid errors
+    non_responses_nb=0
 
     keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
     if not keys_cols:
@@ -157,7 +159,8 @@ def drop_non_responses(df):
         df = df.loc[df['responded'],:].reset_index(drop=True)
 
     # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
-    df,None_drops = drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None')
+    conf_resp_keys_cols = [c for c in list(df) if 'conf_resp.keys' in c]
+    df,None_drops = drop_row_by_col(df,col=conf_resp_keys_cols[0],match_str='None')
 
     # Compute response_rate based on non_responses_nb and None_drops
     response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
