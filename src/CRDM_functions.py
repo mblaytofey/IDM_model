@@ -108,7 +108,28 @@ def get_task_files(split_dir='/tmp/',task='crdm'):
     return task_files
 
 
+def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
+    drops=0
+    if df[ col ].dtype == 'float64':
+        return df,drops
+
+    df1_len = df.shape[0]
+    try:
+        df = df.loc[ df[ col ].str.contains( match_str )==False ].reset_index(drop=True)
+    except AttributeError:
+        print(df[col])
+        print('Something up with col : {}'.format(col))
+        sys.exit()
+    df2_len = df.shape[0]
+    drops = df1_len-df2_len
+    if drops>0:
+        print('**WARNING** We dropped {} rows from column {} containing >>>{}<<<\n'.format(drops,col,match_str))
+    return df,drops
+
 def drop_non_responses(df):
+    # original length of df before dropping rows
+    df_len = df.shape[0]
+
     keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
     if not keys_cols:
         print('We found no column with a trial_resp.keys in the name, check .csv file before continuing. These are the columns names:')
@@ -130,12 +151,20 @@ def drop_non_responses(df):
         print('Check your file and try again')
         sys.exit()
 
-    response_rate=1.0
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
-        response_rate -= float(non_responses_nb)/df['responded'].shape[0]
-        print('\n**WARNING** We dropped {0} of {1} non responses, resulting in response_rate of : {2:0.3f}\n'.format(non_responses_nb,df['responded'].shape[0],response_rate))
+        print('\n**WARNING** We dropped {0} of {1} non responses that were left blank\n'.format(non_responses_nb,df_len))
         df = df.loc[df['responded'],:].reset_index(drop=True)
+
+    # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
+    df,None_drops = drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None')
+
+    # Compute response_rate based on non_responses_nb and None_drops
+    response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
+
+    if response_rate < 1.0:
+        print('The {0} drop(s) resulted in response_rate : {1}'.format(non_responses_nb+None_drops,response_rate))
+
     return df,response_rate
 
 

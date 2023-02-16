@@ -149,9 +149,9 @@ def main():
     # if running this script on its own, start here
     # split_dir = '/Users/pizarror/mturk/idm_data/split'
     # one time hack
-    # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
-    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
-    load_estimate_CRDM_save(split_dir,verbose=True)
+    SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
+    # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
+    load_estimate_CRDM_save(split_dir=SDAN_dir,verbose=True)
 
 
 if __name__ == "__main__":
