@@ -155,7 +155,7 @@ def drop_non_responses(df):
 
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
-        print('\n**WARNING** We dropped {0} of {1} non responses that were left blank\n'.format(non_responses_nb,df_len))
+        print('\n**WARNING** We dropped {0} of {1} non responses that were left blank'.format(non_responses_nb,df_len))
         df = df.loc[df['responded'],:].reset_index(drop=True)
 
     # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
@@ -166,7 +166,7 @@ def drop_non_responses(df):
     response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
 
     if response_rate < 1.0:
-        print('The {0} drop(s) resulted in response_rate : {1}'.format(non_responses_nb+None_drops,response_rate))
+        print('The {0} drop(s) resulted in response_rate : {1}\n'.format(non_responses_nb+None_drops,response_rate))
 
     return df,response_rate
 
