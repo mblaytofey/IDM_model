@@ -98,7 +98,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     counter = 0
     for index,fn in enumerate(crdm_files):
         # Load the CDD file and do some checks
-        print('Working on CRDM csv file {} of {}:\n{}'.format(index,len(crdm_files),fn))
+        print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = get_subject(fn,task='crdm')
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
         crdm_df,response_rate = drop_non_responses(crdm_df)

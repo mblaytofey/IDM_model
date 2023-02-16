@@ -105,7 +105,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
     gk_bounds = ((0,8),(0.0022,7.875))
     for index,fn in enumerate(cdd_files):
         # Load the CDD file and do some checks
-        print('Working on CDD csv file {} of {}:\n{}'.format(index,len(cdd_files),fn))
+        print('Working on CDD csv file {} of {}:\n{}'.format(index+1,len(cdd_files),fn))
         subject = get_subject(fn,task='cdd')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         cdd_df,response_rate = drop_non_responses(cdd_df)
