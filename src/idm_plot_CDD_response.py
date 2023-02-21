@@ -3,10 +3,11 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV,get_data
-from CRDM_functions import GOF_statistics,drop_non_responses,get_subject,get_fig_fn
+import model_functions as mf
+# from CDD_functions import fit_delay_discount_model,probability_choose_delay,store_SV,get_data
+# from CRDM_functions import GOF_statistics,drop_non_responses,get_subject,get_fig_fn
 from idm_split_data import make_dir
-from scipy.interpolate import make_interp_spline, BSpline
+# from scipy.interpolate import make_interp_spline, BSpline
 
 
 def columns_there(df):
@@ -30,19 +31,22 @@ def get_fig_fn(fn,use_alpha=False):
     return fig_fn
 '''
 
-
-def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=False,verbose=False):
+'''
+def plot_save(index,fn,data,gamma,kappa,use_alpha=False,verbose=False):
     # extract values from dataframe to lists of values
-    choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
-    gamma_kappa = np.array([gamma,kappa])
-    p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)
-    SV_delta = [iSV_delay-iSV_soon for (iSV_delay,iSV_soon) in zip(SV_delay,SV_soon)]
+    # choice,value_soon,time_soon,value_delay,time_delay,alpha = data_choice_amt_wait.T.values.tolist()
+    choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
+    parms = np.array([gamma,kappa])
+    # p_choose_delay,SV_soon,SV_delay = probability_choose_delay(value_soon,time_soon,value_delay,time_delay,gamma_kappa,alpha)
+    p_choose_reward,SV_null,SV_reward = mf.probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task='CDD')
+
+    SV_delta = [rew-null for (rew,null) in zip(SV_reward,SV_null)]
     # for saving
     SV = SV_delta
     # sorted for plotting
-    SV_delta, p_choose_delay, choice = zip(*sorted(zip(SV_delta, p_choose_delay, choice)))
+    SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
-    split_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
+    split_dir,fig_fn = mf.get_fig_fn(fn)
     plt.figure(index)
 
     SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
@@ -65,7 +69,7 @@ def plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=False,verbose=
     plt.savefig(os.path.join(split_dir,fig_fn))
     plt.close(index)
     return p_choose_delay, SV, fig_fn, choice
-
+'''
 
 def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
     at_bound = 0
@@ -90,8 +94,11 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
 
 def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
 
-    # Search for CDD files in the split_dir
-    cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
+    if verbose:
+        print('We are working under /split_dir/ : {}'.format(split_dir))
+    cdd_files = mf.get_task_files(split_dir=split_dir,task='cdd')
+    # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
+
     df_cols = ['subject','task','response_rate','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','p_choose_delay_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
@@ -106,9 +113,9 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
     for index,fn in enumerate(cdd_files):
         # Load the CDD file and do some checks
         print('Working on CDD csv file {} of {}:\n{}'.format(index+1,len(cdd_files),fn))
-        subject = get_subject(fn,task='cdd')
+        subject = mf.get_subject(fn,task='cdd')
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
-        cdd_df,response_rate = drop_non_responses(cdd_df)
+        cdd_df,response_rate = mf.drop_non_responses(cdd_df)
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CDD data')
             continue
@@ -120,12 +127,13 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
         alpha_hat=1
         if use_alpha:
             alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
-        cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt','cdd_delay_wait']
-        data_choice_amt_wait, percent_impulse = get_data(cdd_df,cols,alpha_hat=alpha_hat)
+        # cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt','cdd_delay_wait']
+        cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
+        data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat)
         # Estimate gamma and kappa with or without alpha
-        negLL,gamma,kappa = fit_delay_discount_model(data_choice_amt_wait,
-                                                          gk_guess = [0.15, 0.5],
-                                                          gk_bounds = gk_bounds, disp=False)
+        gk_guess = [0.15, 0.5]
+        negLL,gamma,kappa = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
+        # negLL,gamma,kappa = fit_delay_discount_model(data,gk_bounds = gk_bounds, disp=False)
         at_bound = check_to_bound(gamma,kappa,gk_bounds=gk_bounds)
         if verbose:
             print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
@@ -133,12 +141,14 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
             print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
                   format(negLL, gamma, kappa))
 
-        p_choose_delay, SV, fig_fn, choice = plot_save(index,fn,data_choice_amt_wait,gamma,kappa,use_alpha=use_alpha)
-        store_SV(fn,cdd_df,SV_delta=SV,task='cdd',use_alpha=use_alpha)
-        LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
-        p_choose_delay_range = max(p_choose_delay) - min(p_choose_delay)
+        parms = np.array([gamma,kappa])
+        p_choose_delay, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task='CDD',
+            ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',use_alpha=use_alpha,verbose=False,)
+        mf.store_SV(fn,cdd_df,SV_delta=SV,task='cdd',use_alpha=use_alpha)
+        LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_delay,nb_parms=2)
+        p_range = max(p_choose_delay) - min(p_choose_delay)
         
-        row = [subject,'cdd',response_rate,percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_choose_delay_range,fig_fn]
+        row = [subject,'CDD',response_rate,percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
@@ -150,7 +160,8 @@ def load_estimate_CDD_save(split_dir='/tmp/',use_alpha=False,verbose=False):
 
 def main():
     # if running this script on its own, start here
-    split_dir = '/Users/pizarror/mturk/idm_data/split'
+    # split_dir = '/Users/pizarror/mturk/idm_data/split'
+    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/raw/'
     load_estimate_CDD_save(split_dir)
 
 

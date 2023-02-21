@@ -3,8 +3,9 @@ import os,sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics,get_data, drop_non_responses, get_task_files,get_fig_fn,get_subject
-from CDD_functions import store_SV
+# from CRDM_functions import fit_ambiguity_risk_model,probability_choose_ambiguity,GOF_statistics,get_data, drop_non_responses, get_task_files,get_fig_fn,get_subject
+# from CDD_functions import store_SV
+import model_functions as mf
 from idm_split_data import make_dir
 from scipy.interpolate import make_interp_spline, BSpline
 
@@ -33,28 +34,30 @@ def rename_columns(df):
     return df
 
 
-def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False):
+def plot_save(index,fn,data,gamma,beta,alpha,verbose=False):
     # extract values from dataframe to lists of values
-    choice,value_fix,value_ambig,p_fix,p_ambig,ambiguity = data_choice_sure_lott_amb.T.values.tolist()
+    # choice,value_fix,value_ambig,p_fix,p_ambig,ambiguity = data_choice_sure_lott_amb.T.values.tolist()
+    choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
     gamma_beta_alpha = np.array([gamma,beta,alpha])
-    p_choose_ambig,SV_fix,SV_ambig = probability_choose_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha)
-    SV_delta = [amb-fix for (amb,fix) in zip(SV_ambig,SV_fix)]
+    # p_choose_ambig,SV_fix,SV_ambig = probability_choose_ambiguity(value_fix,value_ambig,p_fix,p_ambig,ambiguity,gamma_beta_alpha)
+    p_choose_reward,SV_null,SV_reward = mf.probability_choice(gamma_beta_alpha,value_null,value_reward,p_null,p_reward,ambiguity,task='CRDM')
+    SV_delta = [amb-null for (amb,null) in zip(SV_reward,SV_null)]
     # for saving
     SV = SV_delta
     # sorted for plotting
-    SV_delta, p_choose_ambig, choice = zip(*sorted(zip(SV_delta, p_choose_ambig, choice)))
+    SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
-    split_dir,fig_fn = get_fig_fn(fn)
+    split_dir,fig_fn = mf.get_fig_fn(fn)
     plt.figure(index)
 
     SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
-    SV_delta_x,p_choose_ambig_y = zip(*set(zip(SV_delta, p_choose_ambig)))
-    SV_delta_x,p_choose_ambig_y = zip(*sorted(zip(SV_delta_x,p_choose_ambig_y)))
-    spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_ambig_y),k=2)
+    SV_delta_x,p_choose_reward_y = zip(*set(zip(SV_delta, p_choose_reward)))
+    SV_delta_x,p_choose_reward_y = zip(*sorted(zip(SV_delta_x,p_choose_reward_y)))
+    spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_reward_y),k=2)
     prob_smooth = spl(SV_delta_new)
 
     plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
-    plt.plot(SV_delta,p_choose_ambig,'b:',linewidth=1)
+    plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
     plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
     plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
     plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
@@ -62,11 +65,11 @@ def plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=False)
     plt.ylabel('prob_choose_ambig',fontsize=12)
     plt.xlabel('SV difference (SV_lottery - SV_fixed)',fontsize=12)
     if verbose:
-        plt.title(get_subject(fn,task='crdm'),fontsize=15)
+        plt.title(mf.get_subject(fn,task='crdm'),fontsize=15)
         print('Saving to : /split_dir/ {}'.format(fig_fn))
     plt.savefig(os.path.join(split_dir,fig_fn))
     plt.close(index)
-    return p_choose_ambig, SV, fig_fn, choice
+    return p_choose_reward, SV, fig_fn, choice
 
 
 def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
@@ -83,7 +86,7 @@ def check_to_bound(gamma,beta,alpha,gba_bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
 def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
-    crdm_files = get_task_files(split_dir=split_dir,task='crdm')
+    crdm_files = mf.get_task_files(split_dir=split_dir,task='crdm')
 
     df_cols = ['subject','task','response_rate','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','prob_span','fig_fn']
@@ -99,9 +102,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
     for index,fn in enumerate(crdm_files):
         # Load the CDD file and do some checks
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
-        subject = get_subject(fn,task='crdm')
+        subject = mf.get_subject(fn,task='crdm')
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
-        crdm_df,response_rate = drop_non_responses(crdm_df)
+        crdm_df,response_rate = mf.drop_non_responses(crdm_df)
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CRDM data')
             continue
@@ -118,21 +121,21 @@ def load_estimate_CRDM_save(split_dir='/tmp/', verbose=False):
                 print(crdm_df)
 
         cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
-        data_choice_sure_lott_amb,percent_risk = get_data(crdm_df,cols)
+        data,percent_risk = mf.get_data(crdm_df,cols)
         # Estimate gamma, beta, and alpha
-        negLL,gamma,beta,alpha = fit_ambiguity_risk_model(data_choice_sure_lott_amb,
-                                                          gba_guess = [0.15, 0.5, 0.6],
-                                                          gba_bounds = gba_bounds,disp=False)
+        gba_guess = [0.15, 0.5, 0.6]
+        negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,disp=False)
+
         at_bound = check_to_bound(gamma,beta,alpha,gba_bounds=gba_bounds)
         if verbose:
             print('Percent Risky Choice: {}'.format(percent_risk))
             print("Negative log-likelihood: {}, gamma: {}, beta: {}, alpha: {}".
                   format(negLL, gamma, beta, alpha))
 
-        p_choose_ambig, SV, fig_fn, choice = plot_save(index,fn,data_choice_sure_lott_amb,gamma,beta,alpha,verbose=verbose)
-        store_SV(fn,crdm_df,SV,task='crdm',use_alpha=False)
-        LL,LL0,AIC,BIC,R2,correct = GOF_statistics(negLL,choice,p_choose_ambig,nb_parms=3)
-        p_range = max(p_choose_ambig) - min(p_choose_ambig)
+        p_choose_reward, SV, fig_fn, choice = plot_save(index,fn,data,gamma,beta,alpha,verbose=verbose)
+        mf.store_SV(fn,crdm_df,SV,task='crdm',use_alpha=False)
+        LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
+        p_range = max(p_choose_reward) - min(p_choose_reward)
         
         row = [subject,'CRDM',response_rate,percent_risk,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
