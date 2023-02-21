@@ -32,9 +32,9 @@ def get_task(data):
     resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     # let's check choice column : trial_resp.corr
     if 'crdm' in resp_corr_col:
-        return 'CRDM'
+        return 'crdm'
     elif 'cdd' in resp_corr_col:
-        return 'CDD'
+        return 'cdd'
     else:
         print('We could not find task name from colums : {}'.format(cols))
         sys.exit()
@@ -48,10 +48,10 @@ def function_negLL(parms,data):
     #         choice,value_soon,value_delay,time_soon,time_delay,alpha for CDD
 
     task = get_task(data)
-    if task == 'CRDM':
+    if task == 'crdm':
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
         p_choose_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)[0]
-    elif task == 'CDD':
+    elif task == 'cdd':
         choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
         p_choose_reward = probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task=task)[0]
 
@@ -79,11 +79,11 @@ def prob_softmax(parms,SV1,SV0):
     return p
 
 
-def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5],ambiguity=[0.0],time_null=[0],time_reward=[30],alpha=1.0,ambig_null=0,task='CRDM'):
+def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5],ambiguity=[0.0],time_null=[0],time_reward=[30],alpha=1.0,ambig_null=0,task='crdm'):
     p_choose_reward = []
     SV_null = []
     SV_reward = []
-    if task=='CRDM':
+    if task=='crdm':
         for i,(vn,vr,pn,pr,a) in enumerate(zip(value_null,value_reward,p_null,p_reward,ambiguity)):
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_ambiguity(vn,pn,ambig_null,parms[2],parms[1])
@@ -93,7 +93,7 @@ def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5]
             p_choose_reward.append(p)
             SV_null.append(iSV_null)
             SV_reward.append(iSV_reward)
-    elif task=='CDD':
+    elif task=='cdd':
         for i,(vn,vr,tn,tr,a) in enumerate(zip(value_null,value_reward,time_null,time_reward,alpha)):
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_discount(vn,tn,parms[1],a)
@@ -198,13 +198,14 @@ def get_subject(fn,task='crdm'):
     return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
 
-def plot_save(index,fn,data,parms,task='CRDM',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
+def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
+    print(task)
     # extract values from dataframe to lists of values
-    if task=='CRDM':
+    if task=='crdm':
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
         # parms = np.array([gamma,beta,alpha])
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)
-    elif task=='CDD':
+    elif task=='crdm':
         choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task=task)
 
@@ -233,12 +234,11 @@ def plot_save(index,fn,data,parms,task='CRDM',ylabel='prob_choose_ambig',xlabel=
     plt.ylabel(ylabel,fontsize=12)
     plt.xlabel(xlabel,fontsize=12)
     if verbose:
-        plt.title(get_subject(fn,task=task.lower()),fontsize=15)
+        plt.title(get_subject(fn,task=task),fontsize=15)
         print('Saving to : /split_dir/ {}'.format(fig_fn))
     plt.savefig(os.path.join(split_dir,fig_fn))
     plt.close(index)
     return p_choose_reward, SV, fig_fn, choice
-
 
 
 def get_fig_fn(fn,use_alpha=False):
@@ -252,14 +252,14 @@ def get_fig_fn(fn,use_alpha=False):
 
 def get_data(df,cols,alpha_hat=1.0):
     task = get_task(df)
-    if task == 'CRDM':
+    if task == 'crdm':
         # combining top and bottom values into amount column
         df['crdm_lott_amt'] = df['crdm_lott_top'] + df['crdm_lott_bot']
         # convert percentage to probabilities
         df['crdm_sure_p'] = df['crdm_sure_p'] / 100.0
         df['crdm_lott_p'] = df['crdm_lott_p'] / 100.0
         df['crdm_amb_lev'] = df['crdm_amb_lev'] / 100.0
-    elif task == 'CDD':
+    elif task == 'cdd':
         # add alpha column, will change later
         df['alpha']=alpha_hat
 
