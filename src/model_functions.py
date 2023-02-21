@@ -204,13 +204,13 @@ def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5]
     SV_null = []
     SV_reward = []
     if task=='crdm':
-        for i,(vn,vr,pn,pr,a) in enumerate(zip(value_null,value_reward,p_null,p_reward,ambiguity)):
+        for vn,vr,pn,pr,a in zip(value_null,value_reward,p_null,p_reward,ambiguity):
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_ambiguity(vn,pn,ambig_null,parms[2],parms[1])
             iSV_reward = SV_ambiguity(vr,pr,a,parms[2],parms[1])
             p_choose_reward,SV_null,SV_reward = append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,iSV_reward,iSV_null)
     elif task=='cdd':
-        for i,(vn,vr,tn,tr,a) in enumerate(zip(value_null,value_reward,time_null,time_reward,alpha)):
+        for vn,vr,tn,tr,a in zip(value_null,value_reward,time_null,time_reward,alpha):
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_discount(vn,tn,parms[1],a)
             iSV_reward = SV_discount(vr,tr,parms[1],a)
