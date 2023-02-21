@@ -190,7 +190,7 @@ def prob_softmax(parms,SV1,SV0):
         p = 0
     return p
 
-def append_prob_SV(parms,SV1,SV0):
+def append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,SV1,SV0):
     # compute prob based on SV values
     p = prob_softmax(parms,SV1,SV0)
     # append to list
@@ -208,13 +208,13 @@ def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5]
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_ambiguity(vn,pn,ambig_null,parms[2],parms[1])
             iSV_reward = SV_ambiguity(vr,pr,a,parms[2],parms[1])
-            p_choose_reward,SV_null,SV_reward = append_prob_SV(parms,iSV_reward,iSV_null)
+            p_choose_reward,SV_null,SV_reward = append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,iSV_reward,iSV_null)
     elif task=='cdd':
         for i,(vn,vr,tn,tr,a) in enumerate(zip(value_null,value_reward,time_null,time_reward,alpha)):
             # subjective value (utility) null, reward, corresponding probability choice
             iSV_null = SV_discount(vn,tn,parms[1],a)
             iSV_reward = SV_discount(vr,tr,parms[1],a)
-            p_choose_reward,SV_null,SV_reward = append_prob_SV(parms,iSV_reward,iSV_null)
+            p_choose_reward,SV_null,SV_reward = append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,iSV_reward,iSV_null)
 
     return p_choose_reward,SV_null,SV_reward
 
@@ -256,9 +256,11 @@ def get_subject(fn,task='crdm'):
 def get_fig_fn(fn,use_alpha=False):
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
     if use_alpha:
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
+        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.eps')[1:]
     else:
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
+        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
     return split_dir,fig_fn
 
 # Function to plot the model fit and the choice data. We plot probability of choice as a function of subjective value
@@ -276,7 +278,6 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
     SV_delta = [rew-null for (rew,null) in zip(SV_reward,SV_null)]
     # for saving
     SV = SV_delta
-
     # sorted for plotting
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
@@ -300,7 +301,8 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
     if verbose:
         plt.title(get_subject(fn,task=task),fontsize=15)
         print('Saving to : /split_dir/ {}'.format(fig_fn))
-    plt.savefig(os.path.join(split_dir,fig_fn))
+    # plt.savefig(os.path.join(split_dir,fig_fn))
+    plt.savefig(os.path.join(split_dir,fig_fn),format='eps')
     plt.close(index)
     return p_choose_reward, SV, fig_fn, choice
 
