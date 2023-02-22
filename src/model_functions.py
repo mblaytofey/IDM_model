@@ -25,24 +25,21 @@ def get_task_files(split_dir='/tmp/',task='crdm'):
         sys.exit()        
     return task_files
 
-# written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
-def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
-    drops=0
-    if df[ col ].dtype == 'float64':
-        return df,drops
+def get_batch_name(split_dir='/tmp/'):
+    batch_name = os.path.basename(split_dir)
+    # check empty string
+    if not batch_name:
+        batch_name = os.path.basename(os.path.dirname(split_dir))
+        # check empty string a second time
+        if not batch_name:
+            batch_name = 'batchity_batch'
+            print('**WARNING** Could not determine batch name, will use {}, please check your input dir : {}'.format(batch_name,split_dir))
+    return batch_name
 
-    df1_len = df.shape[0]
-    try:
-        df = df.loc[ df[ col ].str.contains( match_str )==False ].reset_index(drop=True)
-    except AttributeError:
-        print(df[col])
-        print('Something up with col : {}'.format(col))
-        sys.exit()
-    df2_len = df.shape[0]
-    drops = df1_len-df2_len
-    if drops>0:
-        print('**WARNING** We dropped {} rows from column {} containing >>>{}<<<\n'.format(drops,col,match_str))
-    return df,drops
+
+# simple function to get the subject from the filename for appending to analysis spreadsheet and use as title on plots
+def get_subject(fn,task='crdm'):
+    return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
@@ -89,6 +86,25 @@ def drop_non_responses(df):
         print('The {0} drop(s) resulted in response_rate : {1}\n'.format(non_responses_nb+None_drops,response_rate))
 
     return df,response_rate
+
+# written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
+def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
+    drops=0
+    if df[ col ].dtype == 'float64':
+        return df,drops
+
+    df1_len = df.shape[0]
+    try:
+        df = df.loc[ df[ col ].str.contains( match_str )==False ].reset_index(drop=True)
+    except AttributeError:
+        print(df[col])
+        print('Something up with col : {}'.format(col))
+        sys.exit()
+    df2_len = df.shape[0]
+    drops = df1_len-df2_len
+    if drops>0:
+        print('**WARNING** We dropped {} rows from column {} containing >>>{}<<<\n'.format(drops,col,match_str))
+    return df,drops
 
 # After dropping the blank rows, we can select the columns of interest so we can model with the computational models
 def get_data(df,cols,alpha_hat=1.0):
@@ -247,10 +263,6 @@ def check_to_bound(parms,bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
             at_bound = 1
             return at_bound
     return at_bound
-
-# simple function to get the subject from the filename and use as title on plots
-def get_subject(fn,task='crdm'):
-    return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
 def get_fig_fn(fn,use_alpha=False):
