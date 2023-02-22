@@ -271,7 +271,7 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
         # parms = np.array([gamma,beta,alpha])
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)
-    elif task=='crdm':
+    elif task=='cdd':
         choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task=task)
 
