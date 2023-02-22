@@ -42,6 +42,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',task='crdm',verbose=False):
 
     df_dir = split_dir
     batch_name = os.path.basename(split_dir)
+    if not batch_name:
+        batch_name = os.path.basename(os.path.dirname(split_dir))
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds

@@ -49,7 +49,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',task='cdd',use_alpha=False,verbose=
     df_out = pd.DataFrame(columns=df_cols)
 
     df_dir = split_dir
-    batch_name = os.path.basename(split_dir)
+    batch_name = mf.get_batch_name(split_dir=split_dir)
     df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
     if use_alpha:
         df_fn = df_fn.replace('.csv','_alpha.csv')
