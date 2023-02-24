@@ -140,14 +140,15 @@ def get_data(df,cols,alpha_hat=1.0):
 
 '''
 
-def fit_computational_model(data, guess = [1, 0.5, 0.6], bounds = ((0,8),(1e-8,6.4),(0.125,4.341)),disp=False):
+def fit_computational_model(data, guess=[1,0.5,0.6],bounds=((0,8),(1e-8,6.4),(0.125,4.341)),disp=False):
     # data : data_choice_sure_lott_amb for CRDM, 
     #        data_choice_amt_wait for CDD
 
     #### fit model with the minimize function ####
     # for improvement try methods=['BFGS','SLSQP'] 
     # try initializing with 1000 different values
-    results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='L-BFGS-B',options={'disp':disp})
+    results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='SLSQP',options={'disp':disp})
+    # results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='L-BFGS-B',options={'disp':disp})
     
     # number of parameters
     nb_parms = len(guess)
@@ -191,50 +192,49 @@ def function_negLL(parms,data):
     
     # Log-likelihood
     LL = (choice==1)*np.log(p_choose_reward) + ((choice==0))*np.log(1-p_choose_reward)
-
     # Sum of -log-likelihood
     negLL = -sum(LL)
 
     return negLL
 
 
-def prob_softmax(parms,SV1,SV0):
+def prob_softmax(SV1,SV0,gamma=0.5):
     # compute probability using softmax function, return 0 if OverlowError is thrown
     try: 
-        p = 1 / (1 + math.exp(-parms[0]*(SV1 - SV0)))
+        p = 1 / (1 + math.exp(-gamma*(SV1 - SV0)))
     except OverflowError:
         p = 0
     return p
 
 def append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,SV1,SV0):
     # compute prob based on SV values
-    p = prob_softmax(parms,SV1,SV0)
+    p = prob_softmax(SV1,SV0,gamma=parms[0])
     # append to list
     p_choose_reward.append(p)
     SV_null.append(SV0)
     SV_reward.append(SV1)
     return p_choose_reward,SV_null,SV_reward
 
-def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5],ambiguity=[0.0],time_null=[0],time_reward=[30],alpha=1.0,ambig_null=0,task='crdm'):
+def probability_choice(parms,value_null,value_reward,p_null=[1.0],p_reward=[0.5],ambiguity=[0.0],time_null=[0],time_reward=[30],alpha=[1.0],ambig_null=0,task='crdm'):
     p_choose_reward = []
     SV_null = []
     SV_reward = []
     if task=='crdm':
         for vn,vr,pn,pr,a in zip(value_null,value_reward,p_null,p_reward,ambiguity):
             # subjective value (utility) null, reward, corresponding probability choice
-            iSV_null = SV_ambiguity(vn,pn,ambig_null,parms[2],parms[1])
-            iSV_reward = SV_ambiguity(vr,pr,a,parms[2],parms[1])
+            iSV_null = SV_ambiguity(vn,pn,ambig_null,alpha=parms[2],beta=parms[1])
+            iSV_reward = SV_ambiguity(vr,pr,a,alpha=parms[2],beta=parms[1])
             p_choose_reward,SV_null,SV_reward = append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,iSV_reward,iSV_null)
     elif task=='cdd':
         for vn,vr,tn,tr,a in zip(value_null,value_reward,time_null,time_reward,alpha):
             # subjective value (utility) null, reward, corresponding probability choice
-            iSV_null = SV_discount(vn,tn,parms[1],a)
-            iSV_reward = SV_discount(vr,tr,parms[1],a)
+            iSV_null = SV_discount(vn,tn,kappa=parms[1],alpha=a)
+            iSV_reward = SV_discount(vr,tr,kappa=parms[1],alpha=a)
             p_choose_reward,SV_null,SV_reward = append_prob_SV(p_choose_reward,SV_null,SV_reward,parms,iSV_reward,iSV_null)
 
     return p_choose_reward,SV_null,SV_reward
 
-def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
+def SV_ambiguity(value,p_win,ambiguity,alpha=1.0,beta=0.5):
     # subjective value, SV, different when positive and negative
     if value>0:
         SV = (p_win - beta*ambiguity/2) * (value**alpha)
@@ -242,7 +242,7 @@ def SV_ambiguity(value,p_win,ambiguity,alpha,beta):
         SV = (p_win - beta*ambiguity/2) *(-1.0)*(abs(value)**alpha)
     return SV
 
-def SV_discount(value,delay,kappa,alpha):
+def SV_discount(value,delay,kappa=0.005,alpha=1.0):
     SV = (value**alpha)/(1+kappa*delay)
     return SV
 
@@ -264,28 +264,18 @@ def check_to_bound(parms,bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
             return at_bound
     return at_bound
 
-# Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
-def get_fig_fn(fn,use_alpha=False):
-    split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
-    if use_alpha:
-        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.eps')[1:]
-    else:
-        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
-    return split_dir,fig_fn
-
 # Function to plot the model fit and the choice data. We plot probability of choice as a function of subjective value
 def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
-    print(task)
-    # extract values from dataframe to lists of values
+    # extract probability and SV by plugging in estimates parameters into probability choice along with lists of values (choice_set_space)
     if task=='crdm':
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
-        # parms = np.array([gamma,beta,alpha])
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)
     elif task=='cdd':
         choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task=task)
+    else:
+        print('could not estimate values as value for set was : {}'.format(task))
+        sys.exit()
 
     SV_delta = [rew-null for (rew,null) in zip(SV_reward,SV_null)]
     # for saving
@@ -294,6 +284,18 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
     split_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
+    plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
+
+    if verbose:
+        plt.title(get_subject(fn,task=task),fontsize=15)
+        print('Saving to : /split_dir/ {}'.format(fig_fn))
+    # plt.savefig(os.path.join(split_dir,fig_fn))
+    plt.savefig(os.path.join(split_dir,fig_fn),format='eps')
+    plt.close(index)
+    return p_choose_reward, SV, fig_fn, choice
+
+# function to plot the fit, can be used independently
+def plot_fit(index,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig',xlabel='SV difference',title=''):
     plt.figure(index)
 
     SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
@@ -304,19 +306,29 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
 
     plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
     plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
-    plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
+    if choice:
+        plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
+    else:
+        plt.plot(SV_delta,p_choose_reward,'r*-',linewidth=0.5)
     plt.plot([min(SV_delta),max(SV_delta)],[0.5,0.5],'k--',linewidth=0.5)
     plt.plot([0,0],[0.0,1.0],'k--',linewidth=0.5)
 
     plt.ylabel(ylabel,fontsize=12)
     plt.xlabel(xlabel,fontsize=12)
-    if verbose:
-        plt.title(get_subject(fn,task=task),fontsize=15)
-        print('Saving to : /split_dir/ {}'.format(fig_fn))
-    # plt.savefig(os.path.join(split_dir,fig_fn))
-    plt.savefig(os.path.join(split_dir,fig_fn),format='eps')
-    plt.close(index)
-    return p_choose_reward, SV, fig_fn, choice
+    if title:
+        plt.title(title,fontsize=15)
+    return plt
+
+# Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
+def get_fig_fn(fn,use_alpha=False):
+    split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
+    if use_alpha:
+        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.eps')[1:]
+    else:
+        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
+    return split_dir,fig_fn
 
 # function to count the number of trial types, some data was giving a problem and length was not matching, this is fail safe
 # called by store_SV()
