@@ -147,7 +147,7 @@ def fit_computational_model(data, guess=[1,0.5,0.6],bounds=((0,8),(1e-8,6.4),(0.
     #### fit model with the minimize function ####
     # for improvement try methods=['BFGS','SLSQP'] 
     # try initializing with 1000 different values
-    results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='SLSQP',options={'disp':disp})
+    results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='L-BFGS-B',options={'disp':disp})
     # results = optimize.minimize(function_negLL,guess,args=data,bounds=bounds,method='L-BFGS-B',options={'disp':disp})
     
     # number of parameters
