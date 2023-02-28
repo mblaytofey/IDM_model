@@ -64,6 +64,7 @@ def get_raw_files(input_dir,verbose=False):
 	# search under input_dir for raw .csv files
 	raw_files = glob.glob(os.path.join(input_dir,'*.csv'))
 	if verbose:
+		print('Searched this match : {}'.format(os.path.join(input_dir,'*.csv')))
 		print('I found the following files to be analyzed:')
 		print(raw_files)
 	return raw_files
@@ -109,8 +110,6 @@ def run_model_CDD(save_dir='/tmp/',CRDM_counter=0):
 		load_estimate_CDD_save(split_dir=save_dir,use_alpha=True)
 
 		
-
-
 
 def main():
 
