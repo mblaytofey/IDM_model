@@ -37,7 +37,7 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
         alpha_hat = 1.0
     return alpha_hat
 
-
+# can rewrite in terms of sort, fit, plot, like Corey Z does
 def load_estimate_CDD_save(split_dir='/tmp/',task='cdd',use_alpha=False,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))

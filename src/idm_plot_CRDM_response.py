@@ -31,6 +31,7 @@ def rename_columns(df):
     return df
 
 
+# can rewrite in terms of sort, fit, plot, like Corey Z does
 def load_estimate_CRDM_save(split_dir='/tmp/',task='crdm',verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
@@ -41,9 +42,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',task='crdm',verbose=False):
     df_out = pd.DataFrame(columns=df_cols)
 
     df_dir = split_dir
-    batch_name = os.path.basename(split_dir)
-    if not batch_name:
-        batch_name = os.path.basename(os.path.dirname(split_dir))
+    batch_name = mf.get_batch_name(split_dir=split_dir)
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds
