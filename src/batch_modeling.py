@@ -42,6 +42,7 @@ import pandas as pd
 from idm_split_data import make_dir,load_split_save
 from idm_plot_CRDM_response import load_estimate_CRDM_save
 from idm_plot_CDD_response import load_estimate_CDD_save
+import model_functions as mf
 
 
 __author__ = 'Ricardo Pizarro'
@@ -60,7 +61,7 @@ def get_user_input():
 	return input_dir,save_dir
 
 
-def get_raw_files(input_dir,verbose=False):
+def get_raw_files(input_dir = '/tmp/',verbose=False):
 	# search under input_dir for raw .csv files
 	raw_files = glob.glob(os.path.join(input_dir,'*.csv'))
 	if verbose:
@@ -70,10 +71,54 @@ def get_raw_files(input_dir,verbose=False):
 	return raw_files
 
 
+def check_for_files(fn='/tmp/',subj_dir='/tmp/',subject='subject1'):
+	tasks = ['crdm','cdd','cpdm']
+	files_there = True
+	for task in tasks:
+		task_dir = os.path.join(subj_dir,task)
+		# this is the task specific file after splitting the raw file
+		task_fn = os.path.join(task_dir,'{}_{}.csv'.format(subject,task))
+		if not os.path.exists(task_fn):
+			files_there = False
+			return files_there
+		if 'cpdm' not in task:
+			# for cdd and crdm we check model fit eps figure and SV_hat.csv file
+			model_fit_fn = os.path.join(task_dir,'{}_{}_model_fit.eps'.format(subject,task))
+			SV_hat_fn = os.path.join(task_dir,'{}_{}_SV_hat.csv'.format(subject,task))
+			if not (os.path.exists(model_fit_fn) and os.path.exists(SV_hat_fn)):
+				files_there = False
+				return files_there
+			if 'cdd'in task:
+				# for cdd only check for model fit alpha eps figure and SV_hat_alpha.csv file
+				model_fit_alpha_fn = os.path.join(task_dir,'{}_{}_model_fit_alpha.eps'.format(subject,task))
+				SV_hat_alpha_fn = os.path.join(task_dir,'{}_{}_SV_hat_alpha.csv'.format(subject,task))
+				if not (os.path.exists(model_fit_alpha_fn) and os.path.exists(SV_hat_alpha_fn)):
+					files_there = False
+					return files_there
+	return files_there
+
+def already_processed(raw_files = [],save_dir='/tmp/'):
+	print('\n**NOTE** We found {} files in {}'.format(len(raw_files),os.path.dirname(raw_files[0])))
+	print('We are checking one by one if these files have already been processed\n')
+	# If raw file is fully processed, there should be 9 files
+	not_fully_processed = []
+	for fn in raw_files:
+		subject = mf.get_subject(fn,task='')
+		subj_dir = os.path.join(save_dir,subject)
+		files_there = check_for_files(fn=fn,subj_dir=subj_dir,subject=subject)
+		if files_there:
+			batch_name = os.path.basename(os.path.dirname(subj_dir))
+			print('Subject processed. To reanalyze, remove files from: /out_dir/{}/{}'.format(batch_name,subject))
+		else:
+			print('\n**NEW** Subject {} not processed. Will split, save, and model.\n'.format(subject))
+			not_fully_processed = not_fully_processed + [fn]
+
+	return not_fully_processed
+
 def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	# search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
-	raw_files = get_raw_files(input_dir)
+	raw_files = get_raw_files(input_dir=input_dir)
 
 	# save_dir is the root directory where we will save the results
 	# save_dir gets updated to include batch name, taken from input_dir
@@ -88,8 +133,11 @@ def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 		print('Check input path again and rerun script : {}'.format(input_dir))
 		sys.exit()
 
-	# split each raw file and check if any were split
-	total_split,split_counter = load_split_save(raw_files,save_dir)
+	# check if any file in raw_files have already been split, saved, and modeled
+	raw_files = already_processed(raw_files=raw_files,save_dir=save_dir)
+
+	# split each raw file and check how many were split
+	total_split,split_counter = load_split_save(raw_files=raw_files,save_dir=save_dir)
 	if split_counter==0:
 		print('\n\n***ERROR***\nSomehow we could not split the csv files, inspect the files and try again.\n\n')
 		sys.exit()

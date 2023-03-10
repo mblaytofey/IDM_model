@@ -39,7 +39,7 @@ def get_batch_name(split_dir='/tmp/'):
 
 # simple function to get the subject from the filename for appending to analysis spreadsheet and use as title on plots
 def get_subject(fn,task='crdm'):
-    return os.path.basename(fn).replace('_{}.csv'.format(task),'')
+    return os.path.basename(fn).replace('{}.csv'.format(task),'')
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
