@@ -20,9 +20,7 @@ def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
     task_files = glob.glob(os.path.join(split_dir,'*/*/*_{}*.csv'.format(task)))
     task_files = [f for f in task_files if 'SV_hat' not in f]
     if new_subjects:
-        # print(new_subjects)
-        # print(task_files)
-        task_files = [f for f in task_files if get_subject(f) in new_subjects]
+        task_files = [f for f in task_files if get_subject(f,task=task) in new_subjects]
     if not task_files:
         print('\n\n***ERROR***\nThe path to split_dir did not have any .csv files for analysis.\n\n')
         print('Check input path again and rerun script : {}'.format(split_dir))
@@ -415,16 +413,10 @@ def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
 # if path is there, then append to previous saved analysis
 def save_df_out(fn,df1):
     if os.path.exists(fn):
-        df1['subject'] = df1['subject']+'_'
-        print(df1)
         df0 = pd.read_csv(fn,index_col=0)
-        print(df0)
         df0 = df0.loc[~df0['subject'].isin(df1['subject'])]
-        print(df0)
         frames = [df0, df1]
         df1 = pd.concat(frames,ignore_index=True)
-        sys.exit()
-
     print('Saving analysis to : {}'.format(fn))
     df1.to_csv(fn)
     return
