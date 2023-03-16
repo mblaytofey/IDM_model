@@ -168,8 +168,7 @@ def main():
 
 	print('\nI. Raw files :: load, split, and save using BIDS format\n')
 	save_dir,new_subjects = runp1_load_split_save(input_dir=input_dir,save_dir=save_dir)
-	print(new_subjects)
-
+	
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
 	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir,new_subjects=new_subjects,verbose=True)
