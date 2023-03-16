@@ -115,6 +115,10 @@ def already_processed(raw_files = [],save_dir='/tmp/'):
 
 	return not_fully_processed
 
+def list_new_subjects(raw_files=[]):
+	new_subjects = [os.path.basename(fn).replace('.csv','') for fn in raw_files]
+	return new_subjects
+
 def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	# search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
@@ -135,19 +139,17 @@ def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 
 	# check if any file in raw_files have already been split, saved, and modeled
 	raw_files = already_processed(raw_files=raw_files,save_dir=save_dir)
+	new_subjects = list_new_subjects(raw_files=raw_files)
 
-	# split each raw file and check how many were split
-	total_split,split_counter = load_split_save(raw_files=raw_files,save_dir=save_dir)
-	if split_counter==0:
-		print('\n\n***ERROR***\nSomehow we could not split the csv files, inspect the files and try again.\n\n')
-		sys.exit()
+	# split each raw file and throw errors if not able to split them
+	load_split_save(raw_files=raw_files,save_dir=save_dir)
 
-	return save_dir
+	return save_dir,new_subjects
 
 
-def run_model_CDD(save_dir='/tmp/',CRDM_counter=0):
+def run_model_CDD(save_dir='/tmp/',new_subjects=[],CRDM_counter=0):
 	print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
-	load_estimate_CDD_save(split_dir=save_dir,use_alpha=False)
+	load_estimate_CDD_save(split_dir=save_dir,new_subjects=new_subjects,use_alpha=False)
 
 	if CRDM_counter==0:
 		print('**WARNING** Zero CRDM files were modeled, we have no estimate for alpha. All done!')
@@ -155,9 +157,8 @@ def run_model_CDD(save_dir='/tmp/',CRDM_counter=0):
 	else:
 		print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
 		print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding {} CRDM files'.format(CRDM_counter))
-		load_estimate_CDD_save(split_dir=save_dir,use_alpha=True)
+		load_estimate_CDD_save(split_dir=save_dir,new_subjects=new_subjects,use_alpha=True)
 
-		
 
 def main():
 
@@ -166,14 +167,15 @@ def main():
 	input_dir,save_dir = get_user_input()
 
 	print('\nI. Raw files :: load, split, and save using BIDS format\n')
-	save_dir = runp1_load_split_save(input_dir=input_dir,save_dir=save_dir)
+	save_dir,new_subjects = runp1_load_split_save(input_dir=input_dir,save_dir=save_dir)
+	print(new_subjects)
 
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
-	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir)
+	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir,new_subjects=new_subjects,verbose=True)
 
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
-	run_model_CDD(save_dir=save_dir,CRDM_counter=CRDM_counter)
+	run_model_CDD(save_dir=save_dir,new_subjects=new_subjects,CRDM_counter=CRDM_counter)
 
 			
 if __name__ == "__main__":

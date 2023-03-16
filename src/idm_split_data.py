@@ -52,7 +52,7 @@ def save_df(save_dir,fn_OG,df,task='crdm',verbose=False):
 
 
 def load_split_save(raw_files = [],save_dir = '/tmp/'):
-    counter = 0
+    counter,index = 0,0
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
             print('We will split and save the following csv file : \n{}'.format(fn))
@@ -83,8 +83,12 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
         # We did not split all raw files, have to check
         print('**WARNING** For some reason we only split {} of {} files, please check the log files'.format(counter,index))
         total_split=False
-        
-    return total_split,counter
+    elif counter+index==0:
+        print('\n**NOTE** We did not split any new subjects, all subjects have been processed in this batch\n')
+        sys.exit()
+    elif counter==0:
+        print('\n\n***ERROR***\nSomehow we could not split the csv files, inspect the files and try again.\n\n')
+        sys.exit()
         
 
 def main():

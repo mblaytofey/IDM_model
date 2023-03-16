@@ -38,10 +38,10 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     return alpha_hat
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CDD_save(split_dir='/tmp/',task='cdd',use_alpha=False,verbose=False):
+def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
-    cdd_files = mf.get_task_files(split_dir=split_dir,task=task)
+    cdd_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
     # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
     df_cols = ['subject','task','response_rate','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
@@ -98,8 +98,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',task='cdd',use_alpha=False,verbose=
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
     # Save modeled parameters to modeled results
-    print('Saving analysis to : {}'.format(df_fn))
-    df_out.to_csv(df_fn)
+    mf.save_df_out(df_fn,df_out)
 
 
 def main():

@@ -16,9 +16,13 @@ import matplotlib.pyplot as plt
 '''
 
 # search for task files under split_dir and return the list of files, throw error if nothing found
-def get_task_files(split_dir='/tmp/',task='crdm'):
+def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
     task_files = glob.glob(os.path.join(split_dir,'*/*/*_{}*.csv'.format(task)))
-    task_files = [f for f in task_files if 'SV_hat.csv' not in f]
+    task_files = [f for f in task_files if 'SV_hat' not in f]
+    if new_subjects:
+        # print(new_subjects)
+        # print(task_files)
+        task_files = [f for f in task_files if get_subject(f) in new_subjects]
     if not task_files:
         print('\n\n***ERROR***\nThe path to split_dir did not have any .csv files for analysis.\n\n')
         print('Check input path again and rerun script : {}'.format(split_dir))
@@ -39,7 +43,10 @@ def get_batch_name(split_dir='/tmp/'):
 
 # simple function to get the subject from the filename for appending to analysis spreadsheet and use as title on plots
 def get_subject(fn,task='crdm'):
-    return os.path.basename(fn).replace('{}.csv'.format(task),'')
+    if not task:
+        return os.path.basename(fn).replace('{}.csv'.format(task),'')
+    else:
+        return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
@@ -403,6 +410,24 @@ def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     correct = sum((p>=0.5)==choice)/len(p_choice)                                          
 
     return LL,LL0,AIC,BIC,r2,correct
+
+# function to save current analysis 
+# if path is there, then append to previous saved analysis
+def save_df_out(fn,df1):
+    if os.path.exists(fn):
+        df1['subject'] = df1['subject']+'_'
+        print(df1)
+        df0 = pd.read_csv(fn,index_col=0)
+        print(df0)
+        df0 = df0.loc[~df0['subject'].isin(df1['subject'])]
+        print(df0)
+        frames = [df0, df1]
+        df1 = pd.concat(frames,ignore_index=True)
+        sys.exit()
+
+    print('Saving analysis to : {}'.format(fn))
+    df1.to_csv(fn)
+    return
 
 
 
