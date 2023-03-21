@@ -46,7 +46,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds
-    gba_bounds = ((0,8),(1e-8,6.4),(0.125,4.341))
+    # beta should be [-1.something, 1.something] look at choice set space to determine
+    gba_bounds = ((0,8),(-1,3.167),(0.125,4.341))
     counter = 0
     for index,fn in enumerate(crdm_files):
         # Load the CDD file and do some checks
