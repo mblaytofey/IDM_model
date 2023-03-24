@@ -37,7 +37,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('We are working under /split_dir/ : {}'.format(split_dir))
     crdm_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
 
-    df_cols = ['subject','task','response_rate','percent_risk','negLL','gamma','beta','alpha','at_bound','LL','LL0',
+    df_cols = ['subject','task','response_rate','percent_risk','conf_1','conf_2','conf_3','conf_4','negLL','gamma','beta','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','prob_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
@@ -55,6 +55,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         subject = mf.get_subject(fn,task=task)
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
         crdm_df,response_rate = mf.drop_non_responses(crdm_df)
+        conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)        
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CRDM data')
             continue
@@ -90,7 +91,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
         p_range = max(p_choose_reward) - min(p_choose_reward)
         
-        row = [subject,task.upper(),response_rate,percent_risk,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
+        row = [subject,task.upper(),response_rate,percent_risk,conf_1,conf_2,conf_3,conf_4,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 

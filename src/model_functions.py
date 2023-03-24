@@ -111,7 +111,21 @@ def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
         print('**WARNING** We dropped {} rows from column {} containing >>>{}<<<\n'.format(drops,col,match_str))
     return df,drops
 
-# After dropping the blank rows, we can select the columns of interest so we can model with the computational models
+# After dropping the blank rows, we can compute confidence distribution
+def conf_distribution(df,task='crdm'):
+    conf_resp_keys_col = next(c for c in list(df) if 'conf_resp.keys' in c)
+    trial_type_col = next(c for c in list(df) if 'trial_type' in c)
+    df = df.loc[df[trial_type_col]=='task']
+    counts = df[conf_resp_keys_col].value_counts()
+    # initialize at 0
+    count_list = [0]*4
+    for i in counts.index:
+        count_list[int(i)-1]=counts[i]
+    return tuple(count_list)
+
+
+
+# We select the columns of interest so we can model with the computational models
 def get_data(df,cols,alpha_hat=1.0):
     task = get_task(df)
     if task == 'crdm':

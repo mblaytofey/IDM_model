@@ -9,7 +9,7 @@ from idm_split_data import make_dir
 
 def columns_there(df):
     cols_check = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
-                  'cdd_delay_wait']
+                  'cdd_delay_wait','cdd_conf_resp.keys']
     for c in cols_check:
         if c not in list(df):
             print('Moving on to next subject, we could not find column : {}'.format(c))
@@ -44,7 +44,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
     cdd_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
     # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
-    df_cols = ['subject','task','response_rate','percent_impulse','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
+    df_cols = ['subject','task','response_rate','percent_impulse','conf_1','conf_2','conf_3','conf_4','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
                'AIC','BIC','R2','correct','prob_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
@@ -61,6 +61,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         subject = mf.get_subject(fn,task=task)
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
         cdd_df,response_rate = mf.drop_non_responses(cdd_df)
+        conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CDD data')
             continue
@@ -93,7 +94,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
         p_range = max(p_choose_reward) - min(p_choose_reward)
         
-        row = [subject,task.upper(),response_rate,percent_impulse,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
+        row = [subject,task.upper(),response_rate,percent_impulse,conf_1,conf_2,conf_3,conf_4,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
