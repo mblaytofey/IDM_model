@@ -171,7 +171,7 @@ def main():
 	
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
-	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir,new_subjects=new_subjects,verbose=True)
+	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir,new_subjects=new_subjects)
 
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
 	run_model_CDD(save_dir=save_dir,new_subjects=new_subjects,CRDM_counter=CRDM_counter)

@@ -37,8 +37,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('We are working under /split_dir/ : {}'.format(split_dir))
     crdm_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
 
-    df_cols = ['subject','task','response_rate','percent_risk','conf_1','conf_2','conf_3','conf_4','negLL','gamma','beta','alpha','at_bound','LL','LL0',
-               'AIC','BIC','R2','correct','prob_span','fig_fn']
+    df_cols = ['subject','task','response_rate','percent_lottery','percent_risk','percent_ambiguity',
+        'conf_1','conf_2','conf_3','conf_4','negLL','gamma','beta','alpha','at_bound','LL','LL0',
+        'AIC','BIC','R2','correct','prob_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
     df_dir = split_dir
@@ -71,11 +72,14 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
                 print('Renaming worked, we will continue as such')
                 print(crdm_df)
 
-        cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
-        data,percent_risk = mf.get_data(crdm_df,cols)
+        cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p',
+            'crdm_amb_lev']
+        data,percent_lott = mf.get_data(crdm_df,cols)
+        percent_risk,percent_ambig = mf.percent_risk_ambig(data)
         # Estimate gamma, beta, and alpha
         gba_guess = [0.15, 0.5, 0.6]
-        negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,disp=False)
+        negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
+            disp=False)
 
         parms_list = [gamma,beta,alpha]
         at_bound = mf.check_to_bound(parms_list,bounds=gba_bounds)
@@ -91,7 +95,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
         p_range = max(p_choose_reward) - min(p_choose_reward)
         
-        row = [subject,task.upper(),response_rate,percent_risk,conf_1,conf_2,conf_3,conf_4,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
+        row = [subject,task.upper(),response_rate,percent_lott,percent_risk,percent_ambig,
+            conf_1,conf_2,conf_3,conf_4,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,
+            correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 

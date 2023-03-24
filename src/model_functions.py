@@ -152,6 +152,17 @@ def get_data(df,cols,alpha_hat=1.0):
 
     return data,percent_reward
 
+def percent_risk_ambig(df):
+    resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
+    amb_lev_col = next(c for c in list(df) if 'crdm_amb_lev' in c)
+
+    df_risk = df.loc[df[amb_lev_col]==0]
+    df_ambig = df.loc[df[amb_lev_col]>0]
+
+    percent_risk = 1.0 - 1.0*df_risk[resp_corr_col].sum()/df_risk[resp_corr_col].shape[0]
+    percent_ambig = 1.0 - 1.0*df_ambig[resp_corr_col].sum()/df_ambig[resp_corr_col].shape[0]
+    
+    return percent_risk,percent_ambig
 
 
 '''

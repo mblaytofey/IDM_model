@@ -44,8 +44,9 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
     cdd_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
     # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
-    df_cols = ['subject','task','response_rate','percent_impulse','conf_1','conf_2','conf_3','conf_4','negLL','gamma','kappa','alpha','at_bound','LL','LL0',
-               'AIC','BIC','R2','correct','prob_span','fig_fn']
+    df_cols = ['subject','task','response_rate','percent_impulse','conf_1','conf_2','conf_3','conf_4',
+        'negLL','gamma','kappa','alpha','at_bound','LL','LL0','AIC','BIC','R2','correct','prob_span',
+        'fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
     df_dir = split_dir
@@ -89,12 +90,14 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
 
         parms = np.array(parms_list)
         p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
-            ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',use_alpha=use_alpha,verbose=False,)
+            ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',
+            use_alpha=use_alpha,verbose=False,)
         mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,use_alpha=use_alpha)
         LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
         p_range = max(p_choose_reward) - min(p_choose_reward)
         
-        row = [subject,task.upper(),response_rate,percent_impulse,conf_1,conf_2,conf_3,conf_4,negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
+        row = [subject,task.upper(),response_rate,percent_impulse,conf_1,conf_2,conf_3,conf_4,
+            negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
         row_df = pd.DataFrame([row],columns=df_cols)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
