@@ -120,13 +120,11 @@ def list_new_subjects(raw_files=[]):
 	return new_subjects
 
 def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
-	# search for .csv files under input_dir and put them in raw_files list
+	# run part 1: search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
 	raw_files = get_raw_files(input_dir=input_dir)
 
 	# save_dir is the root directory where we will save the results
-	# save_dir gets updated to include batch name, taken from input_dir
-	save_dir = os.path.join(save_dir,os.path.basename(input_dir))
 	print('The results for the batch will be saved under directory : {}'.format(save_dir))
 	# make the updated save_dir if it does not exist
 	make_dir(save_dir)
