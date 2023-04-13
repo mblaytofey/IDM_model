@@ -68,7 +68,7 @@ def get_raw_files(input_dir = '/tmp/',verbose=False):
 		print('Searched this match : {}'.format(os.path.join(input_dir,'*.csv')))
 		print('I found the following files to be analyzed:')
 		print(raw_files)
-	return raw_files
+	return sorted(raw_files)
 
 
 def check_for_files(fn='/tmp/',subj_dir='/tmp/',subject='subject1'):

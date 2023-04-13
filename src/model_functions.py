@@ -25,7 +25,7 @@ def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
         print('\n\n***ERROR***\nThe path to split_dir did not have any .csv files for analysis.\n\n')
         print('Check input path again and rerun script : {}'.format(split_dir))
         sys.exit()        
-    return task_files
+    return sorted(task_files)
 
 def get_batch_name(split_dir='/tmp/'):
     batch_name = os.path.basename(split_dir)

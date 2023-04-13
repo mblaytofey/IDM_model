@@ -65,7 +65,7 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
             print('**WARNING** Some error continued reading file ...  will move on')
             continue
 
-        if df.shape[1]<100:
+        if (df.shape[0]!=1044) or (df.shape[1] not in [75,76,77]):
             print('**DataShape** Not right number of columns, shape {}'.format(df.shape))
             continue
 
