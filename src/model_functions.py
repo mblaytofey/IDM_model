@@ -8,7 +8,8 @@ from scipy.interpolate import make_interp_spline
 import math
 import matplotlib.pyplot as plt
 
-
+# Own modules
+from idm_split_data import make_dir
 
 '''
 ### Pre model-fitting functions, to prepare data and files ###
@@ -313,14 +314,14 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
     # sorted for plotting
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
-    split_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
+    utility_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
     plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
         plt.title(get_subject(fn,task=task),fontsize=15)
-        print('Saving to : /split_dir/ {}'.format(fig_fn))
+        print('Saving to : /utility_dir/ {}'.format(utility_dir))
     # plt.savefig(os.path.join(split_dir,fig_fn))
-    plt.savefig(os.path.join(split_dir,fig_fn),format='eps')
+    plt.savefig(os.path.join(utility_dir,fig_fn),format='eps')
     plt.close(index)
     return p_choose_reward, SV, fig_fn, choice
 
@@ -351,14 +352,16 @@ def plot_fit(index,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig'
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
 def get_fig_fn(fn,use_alpha=False):
+    fig_dir = os.path.dirname(fn).replace('split','utility')
+    make_dir(fig_dir)
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
+    utility_dir = os.path.dirname(os.path.dirname(fig_dir))
+    # save_dir = os.path.dirname(split_dir)
     if use_alpha:
-        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.png')[1:]
         fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.eps')[1:]
     else:
-        # fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.png')[1:]
         fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
-    return split_dir,fig_fn
+    return utility_dir,fig_fn
 
 # function to count the number of trial types, some data was giving a problem and length was not matching, this is fail safe
 # called by store_SV()
@@ -406,9 +409,9 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     df_out.drop(columns=[conf_resp],inplace=True)
     # print(df_out)
     if use_alpha:
-        fn = fn.replace('.csv','_SV_hat_alpha.csv')
+        fn = fn.replace('split','utility').replace('.csv','_SV_hat_alpha.csv')
     else:
-        fn = fn.replace('.csv','_SV_hat.csv')
+        fn = fn.replace('split','utility').replace('.csv','_SV_hat.csv')
     if verbose:
         print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
     df_out.to_csv(fn,index=False)

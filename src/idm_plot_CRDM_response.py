@@ -4,7 +4,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import model_functions as mf
-# from idm_split_data import make_dir
+from idm_split_data import make_dir
 
 
 def columns_there(df):
@@ -42,8 +42,10 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         'AIC','BIC','R2','correct','prob_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
-    df_dir = split_dir
+    utility_dir = split_dir.replace('split','utility')
+    make_dir(utility_dir)
     batch_name = mf.get_batch_name(split_dir=split_dir)
+    df_dir = utility_dir
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds
