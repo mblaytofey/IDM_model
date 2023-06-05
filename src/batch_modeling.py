@@ -61,7 +61,7 @@ def get_user_input():
 	return input_dir,save_dir
 
 
-def get_raw_files(input_dir = '/tmp/',verbose=False):
+def get_csv_files(input_dir = '/tmp/',verbose=False):
 	# search under input_dir for raw .csv files
 	raw_files = glob.glob(os.path.join(input_dir,'*.csv'))
 	if verbose:
@@ -115,14 +115,14 @@ def already_split(raw_files = [],split_dir='/tmp/'):
 
 	return not_fully_split
 
-def list_new_subjects(raw_files=[]):
-	new_subjects = [os.path.basename(fn).replace('.csv','') for fn in raw_files]
+def list_new_subjects(csv_files=[]):
+	new_subjects = [os.path.basename(fn).replace('.csv','') for fn in csv_files]
 	return new_subjects
 
 def run_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	# run part 1: search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
-	raw_files = get_raw_files(input_dir=input_dir)
+	raw_files = get_csv_files(input_dir=input_dir)
 
 	# save_dir is the root directory where we will save the results
 	split_dir = os.path.join(save_dir,'split')
@@ -138,10 +138,68 @@ def run_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 
 	# check if any file in raw_files have already been split, saved, and modeled
 	raw_files = already_split(raw_files=raw_files,split_dir=split_dir)
-	new_subjects = list_new_subjects(raw_files=raw_files)
+	new_subjects = list_new_subjects(csv_files=raw_files)
 
 	# split each raw file and throw errors if not able to split them
 	load_split_save(raw_files=raw_files,split_dir=split_dir)
+
+	return split_dir,new_subjects
+
+
+
+def check_model_files(task_fn='/tmp/',subj_dir='/tmp/',subject='subject1',task='crdm'):
+	files_there = True
+	utility_dir = os.path.join(subj_dir,task).replace('split','utility')
+	# for cdd and crdm we check model fit eps figure and SV_hat.csv file
+	model_fit_fn = os.path.join(utility_dir,'{}_{}_model_fit.eps'.format(subject,task))
+	SV_hat_fn = os.path.join(utility_dir,'{}_{}_SV_hat.csv'.format(subject,task))
+	if not (os.path.exists(model_fit_fn) and os.path.exists(SV_hat_fn)):
+		files_there = False
+		return files_there
+	if 'cdd'in task:
+		# for cdd only check for model fit alpha eps figure and SV_hat_alpha.csv file
+		model_fit_alpha_fn = os.path.join(utility_dir,'{}_{}_model_fit_alpha.eps'.format(subject,task))
+		SV_hat_alpha_fn = os.path.join(utility_dir,'{}_{}_SV_hat_alpha.csv'.format(subject,task))
+		if not (os.path.exists(model_fit_alpha_fn) and os.path.exists(SV_hat_alpha_fn)):
+			files_there = False
+			return files_there
+	return files_there
+
+
+def already_model(task_csv_files = [],split_dir='/tmp/',task='crdm'):
+	print('\n**NOTE** We found {} files in {}'.format(len(task_csv_files),os.path.dirname(task_csv_files[0])))
+	print('We are checking one by one if these files have already been modeled\n')
+	# If raw file is fully model, there should be 3 files
+	not_fully_split = []
+	for fn in task_csv_files:
+		subject = mf.get_subject(fn,task=task)
+		subj_dir = os.path.join(split_dir,subject)
+		files_there = check_model_files(task_fn=fn,subj_dir=subj_dir,subject=subject,task=task)
+		if files_there:
+			batch_name = os.path.basename(os.path.dirname(subj_dir))
+			print('Subject split. To reanalyze, remove files from: /out_dir/{}/{}'.format(batch_name,subject))
+		else:
+			print('\n**NEW** Subject {} has not been split. We will now split.\n'.format(subject))
+			not_fully_split = not_fully_split + [fn]
+
+	return not_fully_split
+
+
+def check_task_files(split_dir='/tmp/',task='crdm'):
+	# run part 1: search for .csv files under input_dir and put them in raw_files list
+	print('Looking for {} .csv files in : {}'.format(task,split_dir))
+	search_dir = os.path.join(split_dir,'*/{}'.format(task))
+	task_csv_files = get_csv_files(input_dir=search_dir)
+
+	# if a raw file was found, this list will not be empty
+	if not task_csv_files:
+		print('\n\n***ERROR***\nThe path to batch did not have any .csv files for analysis.\n\n')
+		print('Check input path again and rerun script : {}'.format(search_dir))
+		sys.exit()
+
+	# check if any file in raw_files have already been split, saved, and modeled
+	task_csv_files = already_model(task_csv_files=task_csv_files,split_dir=split_dir,task='crdm')
+	new_subjects = list_new_subjects(csv_files=task_csv_files)
 
 	return split_dir,new_subjects
 
@@ -170,7 +228,7 @@ def main():
 	
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
-	print(split_dir)
+	split_dir,new_subjects = check_task_files(split_dir=split_dir,task='crdm')
 	CRDM_counter = load_estimate_CRDM_save(split_dir=split_dir,new_subjects=new_subjects)
 
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
