@@ -119,7 +119,7 @@ def list_new_subjects(raw_files=[]):
 	new_subjects = [os.path.basename(fn).replace('.csv','') for fn in raw_files]
 	return new_subjects
 
-def runp1_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
+def run_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	# run part 1: search for .csv files under input_dir and put them in raw_files list
 	print('Looking for raw .csv files in : {}'.format(input_dir))
 	raw_files = get_raw_files(input_dir=input_dir)
@@ -165,7 +165,7 @@ def main():
 	input_dir,save_dir = get_user_input()
 
 	print('\nI. Raw files :: load, split, and save using BIDS format\n')
-	save_dir,new_subjects = runp1_load_split_save(input_dir=input_dir,save_dir=save_dir)
+	save_dir,new_subjects = run_load_split_save(input_dir=input_dir,save_dir=save_dir)
 	
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
