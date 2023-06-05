@@ -167,7 +167,8 @@ def check_model_files(task_fn='/tmp/',subj_dir='/tmp/',subject='subject1',task='
 
 
 def already_model(task_csv_files = [],split_dir='/tmp/',task='crdm'):
-	print('\n**NOTE** We found {} files in {}'.format(len(task_csv_files),os.path.dirname(task_csv_files[0])))
+	print('\n**NOTE** We found {} files in {}'.format(len(task_csv_files),
+						   os.path.dirname(os.path.dirname(os.path.dirname(task_csv_files[0])))))
 	print('We are checking one by one if these files have already been modeled\n')
 	# If raw file is fully model, there should be 3 files
 	not_fully_split = []
@@ -179,7 +180,7 @@ def already_model(task_csv_files = [],split_dir='/tmp/',task='crdm'):
 			batch_name = os.path.basename(os.path.dirname(subj_dir))
 			print('Subject split. To reanalyze, remove files from: /out_dir/{}/{}'.format(batch_name,subject))
 		else:
-			print('\n**NEW** Subject {} has not been split. We will now split.\n'.format(subject))
+			print('\n**NEW** Subject {} has not been modeled. We will now model with CRDM.\n'.format(subject))
 			not_fully_split = not_fully_split + [fn]
 
 	return not_fully_split
@@ -229,6 +230,7 @@ def main():
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
 	split_dir,new_subjects = check_task_files(split_dir=split_dir,task='crdm')
+	print(new_subjects)
 	CRDM_counter = load_estimate_CRDM_save(split_dir=split_dir,new_subjects=new_subjects)
 
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')

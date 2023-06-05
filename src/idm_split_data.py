@@ -84,8 +84,7 @@ def load_split_save(raw_files = [],split_dir = '/tmp/'):
         print('**WARNING** For some reason we only split {} of {} files, please check the log files'.format(counter,index))
         total_split=False
     elif counter+index==0:
-        print('\n**NOTE** We did not split any new subjects, all subjects have been processed in this batch\n')
-        sys.exit()
+        print('\n**NOTE** We did not split any new subjects, all subjects have been split and stored\n')
     elif counter==0:
         print('\n\n***ERROR***\nSomehow we could not split the csv files, inspect the files and try again.\n\n')
         sys.exit()
