@@ -146,9 +146,9 @@ def run_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
 	return split_dir,new_subjects
 
 
-def run_model_CDD(save_dir='/tmp/',new_subjects=[],CRDM_counter=0):
+def run_model_CDD(split_dir='/tmp/',new_subjects=[],CRDM_counter=0):
 	print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
-	load_estimate_CDD_save(split_dir=save_dir,new_subjects=new_subjects,use_alpha=False)
+	load_estimate_CDD_save(split_dir=split_dir,new_subjects=new_subjects,use_alpha=False)
 
 	if CRDM_counter==0:
 		print('**WARNING** Zero CRDM files were modeled, we have no estimate for alpha. All done!')
@@ -156,7 +156,7 @@ def run_model_CDD(save_dir='/tmp/',new_subjects=[],CRDM_counter=0):
 	else:
 		print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
 		print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding {} CRDM files'.format(CRDM_counter))
-		load_estimate_CDD_save(split_dir=save_dir,new_subjects=new_subjects,use_alpha=True)
+		load_estimate_CDD_save(split_dir=split_dir,new_subjects=new_subjects,use_alpha=True)
 
 
 def main():
@@ -170,10 +170,11 @@ def main():
 	
 	print('\nII. Model CRDM task :: estimate model, save fit plot, and save parameters \n')
 	# model CRDM tasks, count how many files get modeled
-	CRDM_counter = load_estimate_CRDM_save(split_dir=save_dir,new_subjects=new_subjects)
+	print(split_dir)
+	CRDM_counter = load_estimate_CRDM_save(split_dir=split_dir,new_subjects=new_subjects)
 
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
-	run_model_CDD(save_dir=save_dir,new_subjects=new_subjects,CRDM_counter=CRDM_counter)
+	run_model_CDD(split_dir=split_dir,new_subjects=new_subjects,CRDM_counter=CRDM_counter)
 
 			
 if __name__ == "__main__":

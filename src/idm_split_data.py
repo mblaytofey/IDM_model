@@ -51,7 +51,7 @@ def save_df(save_dir,fn_OG,df,task='crdm',verbose=False):
         df.to_csv(fn)
 
 
-def load_split_save(raw_files = [],save_dir = '/tmp/'):
+def load_split_save(raw_files = [],split_dir = '/tmp/'):
     counter,index = 0,0
     for index, fn in enumerate(raw_files):
         if os.path.exists(fn):
@@ -71,9 +71,9 @@ def load_split_save(raw_files = [],save_dir = '/tmp/'):
 
         crdm_df,cdd_df,cpdm_df = split_by_task(df)
         
-        save_df(save_dir,fn,crdm_df,task='crdm')
-        save_df(save_dir,fn,cdd_df,task='cdd')
-        save_df(save_dir,fn,cpdm_df,task='cpdm')
+        save_df(split_dir,fn,crdm_df,task='crdm')
+        save_df(split_dir,fn,cdd_df,task='cdd')
+        save_df(split_dir,fn,cpdm_df,task='cpdm')
 
         counter+=1
 
