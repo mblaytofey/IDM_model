@@ -115,8 +115,10 @@ def already_split(raw_files = [],split_dir='/tmp/'):
 
 	return not_fully_split
 
-def list_new_subjects(csv_files=[]):
+def list_new_subjects(csv_files=[],task='crdm'):
 	new_subjects = [os.path.basename(fn).replace('.csv','') for fn in csv_files]
+	if task:
+		new_subjects = [os.path.basename(fn).replace('_{}.csv'.format(task),'') for fn in csv_files]
 	return new_subjects
 
 def run_load_split_save(input_dir='/tmp/',save_dir='/tmp/'):
