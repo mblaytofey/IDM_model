@@ -76,7 +76,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
 
         cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p',
             'crdm_amb_lev']
-        data,percent_lott = mf.get_data(crdm_df,cols)
+        data,percent_safe = mf.get_data(crdm_df,cols)
+        percent_lott = 1.0 - percent_safe
         percent_risk,percent_ambig = mf.percent_risk_ambig(data)
         # Estimate gamma, beta, and alpha
         gba_guess = [0.15, 0.5, 0.6]
