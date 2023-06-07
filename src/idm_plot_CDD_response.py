@@ -93,7 +93,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         parms = np.array(parms_list)
         p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
             ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',
-            use_alpha=use_alpha,verbose=False,)
+            use_alpha=use_alpha,verbose=True)
         mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,use_alpha=use_alpha)
         LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
         p_range = max(p_choose_reward) - min(p_choose_reward)
