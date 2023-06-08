@@ -8,8 +8,6 @@ from scipy.interpolate import make_interp_spline
 import math
 import matplotlib.pyplot as plt
 
-# Own modules
-from idm_split_data import make_dir
 
 '''
 ### Pre model-fitting functions, to prepare data and files ###
@@ -349,6 +347,12 @@ def plot_fit(index,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig'
     if title:
         plt.title(title,fontsize=15)
     return plt
+
+def make_dir(this_dir,verbose=False):
+    if not os.path.exists(this_dir):
+        if verbose:
+            print('Creating: {}'.format(this_dir))
+        os.makedirs(this_dir)
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
 def get_fig_fn(fn,use_alpha=False):
