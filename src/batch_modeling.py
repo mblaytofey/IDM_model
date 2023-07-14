@@ -237,10 +237,8 @@ def main():
 	print('\nIII. Model CDD task :: estimate (with and without alpha), save fit plot, and save parameters \n')
 	run_model_CDD(split_dir=split_dir,new_subjects=new_subjects,CRDM_counter=CRDM_counter)
 
-			
+
 if __name__ == "__main__":
 	# main will be executed after running the script
     main()
-
-
 
