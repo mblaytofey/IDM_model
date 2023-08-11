@@ -110,7 +110,8 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
 def main():
     # if running this script on its own, start here
     # split_dir = '/Users/pizarror/mturk/idm_data/split'
-    split_dir = '/Users/pizarror/mturk/idm_data/batch_output/raw/'
+    split_dir = mf.get_split_dir()
+    # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/raw/'
     load_estimate_CDD_save(split_dir)
 
 

@@ -121,7 +121,6 @@ def conf_distribution(df,task='crdm'):
     trial_type_col = next(c for c in list(df) if 'trial_type' in c)
     df = df.loc[df[trial_type_col]=='task']
     conf_resp_keys_col = next(c for c in list(df) if ('conf_resp.keys' in c) and ('pract' not in c))
-    print(conf_resp_keys_col)
     counts = df[conf_resp_keys_col].value_counts()
     # initialize at 0
     count_list = [0]*4
