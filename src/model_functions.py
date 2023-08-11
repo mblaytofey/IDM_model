@@ -14,6 +14,12 @@ import matplotlib.pyplot as plt
 
 '''
 
+# get split_dir for each project
+def get_split_dir():
+	split_dir = input('What is the split directory? Where are the task files located?\n')
+	return split_dir
+
+
 # search for task files under split_dir and return the list of files, throw error if nothing found
 def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
     task_files = glob.glob(os.path.join(split_dir,'*/*/*_{}*.csv'.format(task)))
@@ -112,9 +118,10 @@ def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
 
 # After dropping the blank rows, we can compute confidence distribution
 def conf_distribution(df,task='crdm'):
-    conf_resp_keys_col = next(c for c in list(df) if 'conf_resp.keys' in c)
     trial_type_col = next(c for c in list(df) if 'trial_type' in c)
     df = df.loc[df[trial_type_col]=='task']
+    conf_resp_keys_col = next(c for c in list(df) if ('conf_resp.keys' in c) and ('pract' not in c))
+    print(conf_resp_keys_col)
     counts = df[conf_resp_keys_col].value_counts()
     # initialize at 0
     count_list = [0]*4
