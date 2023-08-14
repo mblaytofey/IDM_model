@@ -398,6 +398,8 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
+    resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
+    # resp_corr_col = '{}_trial_resp.corr'.format(task)
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
@@ -413,11 +415,12 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     except ValueError:
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
-    df_out = df.loc[df[trial_type_col]=='task',[conf_resp,'SV_delta','ambig_trial']].reset_index(drop=True)
+    df_out = df.loc[df[trial_type_col]=='task',[conf_resp,resp_corr_col,'SV_delta','ambig_trial']].reset_index(drop=True)
     df_out = df_out.astype(float)
-    df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out.drop(columns=[conf_resp],inplace=True)
-    # print(df_out)
+    # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
+    df_out['valence'] = 2*df_out[resp_corr_col] - 1.0
+    df_out['confidence'] = df_out[conf_resp]*df_out['valence']
+    df_out.drop(columns=[conf_resp,resp_corr_col,'valence'],inplace=True)
     if use_alpha:
         fn = fn.replace('split','utility').replace('.csv','_SV_hat_alpha.csv')
     else:
