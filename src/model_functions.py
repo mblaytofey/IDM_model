@@ -399,7 +399,6 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
     resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
-    # resp_corr_col = '{}_trial_resp.corr'.format(task)
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
