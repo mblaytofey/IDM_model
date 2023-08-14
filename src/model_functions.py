@@ -417,7 +417,7 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,resp_corr_col,'SV_delta','ambig_trial']].reset_index(drop=True)
     df_out = df_out.astype(float)
     # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out['valence'] = 2*df_out[resp_corr_col] - 1.0
+    df_out['valence'] = 1.0 - 2*df_out[resp_corr_col]
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
     df_out.drop(columns=[conf_resp,resp_corr_col,'valence'],inplace=True)
     if use_alpha:
