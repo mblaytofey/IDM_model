@@ -56,8 +56,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = mf.get_subject(fn,task=task)
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
-        crdm_df,response_rate = mf.drop_non_responses(crdm_df)
-        conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)        
+        crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task)
+        conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CRDM data')
             continue
@@ -75,9 +75,9 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
 
         cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p',
             'crdm_amb_lev']
-        data,percent_safe = mf.get_data(crdm_df,cols)
+        data,percent_safe = mf.get_data(crdm_df,cols,task=task)
         percent_lott = 1.0 - percent_safe
-        percent_risk,percent_ambig = mf.percent_risk_ambig(data)
+        percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
         # Estimate gamma, beta, and alpha
         gba_guess = [0.15, 0.5, 0.6]
         negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,

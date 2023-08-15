@@ -63,7 +63,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         print('Working on CDD csv file {} of {}:\n{}'.format(index+1,len(cdd_files),fn))
         subject = mf.get_subject(fn,task=task)
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
-        cdd_df,response_rate = mf.drop_non_responses(cdd_df)
+        cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task)
         conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
         if response_rate < 0.05:
             print('**ERROR** Low response rate, cannot model this subjects CDD data')
@@ -77,7 +77,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         if use_alpha:
             alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
         cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
-        data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat)
+        data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat,task=task)
         # Estimate gamma and kappa with or without alpha
         gk_guess = [0.15, 0.5]
         negLL,gamma,kappa = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
