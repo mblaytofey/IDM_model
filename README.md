@@ -36,7 +36,7 @@ The script will output where the files get saved, then you can open the files in
 
 ## 2b. Run batch modeling:
 
-**NOTE** :: Batch modeling was written to analyzing the IDM project recorded online. If you have the CRDM and CDD task files already saved as separate spreadsheets (.csv) use the two functions in Step 2a above.
+**NOTE** :: Batch modeling was written to analyze the IDM project recorded online. If you have the CRDM and CDD task files already saved as separate spreadsheets (.csv) use the two functions in Step 2a above.
 
 - Execute python script batch_modeling.py. Run the script from the Terminal and follow the steps 
 
