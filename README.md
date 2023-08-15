@@ -20,20 +20,7 @@ If you are unfamiliar with Python and conda environments, please refer to our [C
 
     `$ cd IDM_model/src`
 
-## 2. Run batch modeling:
-
-- Execute python script batch_modeling.py. Run the script from the Terminal and follow the steps 
-
-    `$ python batch_modeling.py`
-
-> Enter the path (or directory) where the raw files are located that you would like to analyze (no quotes).  
-
-> Enter the path (or directory) where the output files will be saved (or written) 
-
-The script will output where the files get saved, then you can open the files in Finder or directly from Terminal, if you're feeling adventurous. 
-
- 
-## 3. Run CRDM or CDD independently:
+## 2a. Run CRDM or CDD independently:
 
 - For CRDM, execute python script [idm_plot_CRDM_response.py](src/idm_plot_CRDM_response.py)
 
@@ -46,3 +33,20 @@ The script will output where the files get saved, then you can open the files in
 > Enter the path (or directory) where the split files are located that you would like to analyze (no quotes).  
 
 The script will output where the files get saved, then you can open the files in Finder or directly from Terminal, if you're feeling adventurous. 
+
+## 2b. Run batch modeling:
+
+**NOTE** :: Batch modeling was written to analyzing the IDM project recorded online. If you have the CRDM and CDD task files already saved as separate spreadsheets (.csv) use the two functions in Step 2a above.
+
+- Execute python script batch_modeling.py. Run the script from the Terminal and follow the steps 
+
+    `$ python batch_modeling.py`
+
+> Enter the path (or directory) where the raw files are located that you would like to analyze (no quotes).  
+
+> Enter the path (or directory) where the output files will be saved (or written) 
+
+The script will output where the files get saved, then you can open the files in Finder or directly from Terminal, if you're feeling adventurous. 
+
+ 
+
