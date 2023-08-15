@@ -53,7 +53,7 @@ def get_subject(fn,task='crdm'):
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
-def drop_non_responses(df):
+def drop_non_responses(df,task='crdm'):
     # original length of df before dropping rows
     df_len = df.shape[0]
     # initialized to avoid errors
@@ -86,8 +86,10 @@ def drop_non_responses(df):
         df = df.loc[df['responded'],:].reset_index(drop=True)
 
     # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
-    conf_resp_keys_cols = [c for c in list(df) if 'conf_resp.keys' in c]
-    df,None_drops = drop_row_by_col(df,col=conf_resp_keys_cols[0],match_str='None')
+    # From SDM **WARNING** We dropped 99 rows from column cdd_pract_conf_resp.keys containing >>>None<<<
+    # conf_resp_keys_cols = [c for c in list(df) if 'conf_resp.keys' in c]
+    conf_resp = '{}_conf_resp.keys'.format(task)
+    df,None_drops = drop_row_by_col(df,col=conf_resp,match_str='None')
 
     # Compute response_rate based on non_responses_nb and None_drops
     response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
@@ -120,18 +122,22 @@ def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
 def conf_distribution(df,task='crdm'):
     trial_type_col = next(c for c in list(df) if 'trial_type' in c)
     df = df.loc[df[trial_type_col]=='task']
-    conf_resp_keys_col = next(c for c in list(df) if ('conf_resp.keys' in c) and ('pract' not in c))
-    counts = df[conf_resp_keys_col].value_counts()
+    conf_resp = '{}_conf_resp.keys'.format(task)
+    # conf_resp_keys_col = next(c for c in list(df) if ('conf_resp.keys' in c) and ('pract' not in c))
+    counts = df[conf_resp].value_counts()
     # initialize at 0
     count_list = [0]*4
     for i in counts.index:
+        if i in 'None':
+            print('**WARNING** We found a >>>None<<< in the conf_resp column. We will skip for now')
+            continue
         count_list[int(i)-1]=counts[i]
     return tuple(count_list)
 
 
 
 # We select the columns of interest so we can model with the computational models
-def get_data(df,cols,alpha_hat=1.0):
+def get_data(df,cols,alpha_hat=1.0,task='crdm'):
     task = get_task(df)
     if task == 'crdm':
         # combining top and bottom values into amount column
@@ -149,7 +155,8 @@ def get_data(df,cols,alpha_hat=1.0):
     # drop rows with NA int them
     data = data.dropna()
 
-    resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
+    # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
+    resp_corr_col = '{}_trial_resp.corr'.format(task)
     # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
     # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
     data[resp_corr_col] = 1.0 - data[resp_corr_col]
@@ -157,8 +164,9 @@ def get_data(df,cols,alpha_hat=1.0):
 
     return data,percent_reward
 
-def percent_risk_ambig(df):
-    resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
+def percent_risk_ambig(df,task='crdm'):
+    # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
+    resp_corr_col = '{}_trial_resp.corr'.format(task)
     amb_lev_col = next(c for c in list(df) if 'crdm_amb_lev' in c)
 
     df_risk = df.loc[df[amb_lev_col]==0]
