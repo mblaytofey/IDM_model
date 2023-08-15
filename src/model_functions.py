@@ -128,8 +128,8 @@ def conf_distribution(df,task='crdm'):
     # initialize at 0
     count_list = [0]*4
     for i in counts.index:
-        if i in 'None':
-            print('**WARNING** We found a >>>None<<< in the conf_resp column. We will skip for now')
+        if type(i) is str:
+            print('**WARNING** We found a string >>>{}<<< in the conf_resp column. We will skip for now'.format(i))
             continue
         count_list[int(i)-1]=counts[i]
     return tuple(count_list)
