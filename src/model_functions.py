@@ -129,8 +129,11 @@ def conf_distribution(df,task='crdm'):
     count_list = [0]*4
     for i in counts.index:
         if type(i) is str:
-            print('**WARNING** We found a string >>>{}<<< in the conf_resp column. We will skip for now'.format(i))
-            continue
+            if i in ['1','2','3','4']:
+                pass
+            else:
+                print('**WARNING** We found a string >>>{}<<< in the conf_resp column. We will skip for now'.format(i))
+                continue
         count_list[int(i)-1]=counts[i]
     return tuple(count_list)
 
