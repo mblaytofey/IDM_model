@@ -51,6 +51,21 @@ def get_subject(fn,task='crdm'):
     else:
         return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
+# simple function to remap the responses
+def remap_response(df,task='crdm'):
+    # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
+    resp_corr_col = '{}_trial_resp.corr'.format(task)
+    # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
+    # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
+    df[resp_corr_col] = 1.0 - df[resp_corr_col]
+    return df
+
+# simple fucntion to drop practice trials. They are not used
+def drop_pract_trials(df,task='crdm'):
+    trial_type_col = '{}_trial_type'.format(task)
+    df = df.loc[df[trial_type_col]=='task']
+    return df
+
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
 def drop_non_responses(df,task='crdm'):
@@ -140,7 +155,7 @@ def conf_distribution(df,task='crdm'):
 
 
 # We select the columns of interest so we can model with the computational models
-def get_data(df,cols,alpha_hat=1.0,task='crdm'):
+def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
     task = get_task(df)
     if task == 'crdm':
         # combining top and bottom values into amount column
@@ -153,19 +168,19 @@ def get_data(df,cols,alpha_hat=1.0,task='crdm'):
         # add alpha column, will change later
         df['alpha']=alpha_hat
 
+    # select by domain: gain/loss
+    domain_col = '{}_domain'
+    df = df.loc[df[domain_col]==domain]
     # select from columns
     data = df[cols]
     # drop rows with NA int them
     data = data.dropna()
 
-    # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     resp_corr_col = '{}_trial_resp.corr'.format(task)
-    # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
-    # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
-    data[resp_corr_col] = 1.0 - data[resp_corr_col]
-    percent_reward = 1.0 - 1.0*data[resp_corr_col].sum()/data[resp_corr_col].shape[0]
+    # crdm: percent_safe, cdd: percent_impulse
+    percent_null = 1.0 - 1.0*data[resp_corr_col].sum()/data[resp_corr_col].shape[0]
 
-    return data,percent_reward
+    return data,percent_null
 
 def percent_risk_ambig(df,task='crdm'):
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
@@ -409,7 +424,8 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
-    resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
+    resp_corr_col = '{}_trial_resp.corr'.format(task)
+    # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
@@ -428,7 +444,7 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,resp_corr_col,'SV_delta','ambig_trial']].reset_index(drop=True)
     df_out = df_out.astype(float)
     # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out['valence'] = 1.0 - 2*df_out[resp_corr_col]
+    df_out['valence'] = 2.0*df_out[resp_corr_col] - 1.0
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
     df_out.drop(columns=[conf_resp,resp_corr_col,'valence'],inplace=True)
     if use_alpha:

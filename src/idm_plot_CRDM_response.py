@@ -36,7 +36,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('We are working under /split_dir/ : {}'.format(split_dir))
     crdm_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
 
-    df_cols = ['subject','task','response_rate','percent_lottery','percent_risk','percent_ambiguity',
+    df_cols = ['subject','task','domain','response_rate','percent_lottery','percent_risk','percent_ambiguity',
         'conf_1','conf_2','conf_3','conf_4','negLL','gamma','beta','alpha','at_bound','LL','LL0',
         'AIC','BIC','R2','correct','prob_span','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
@@ -56,6 +56,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = mf.get_subject(fn,task=task)
         crdm_df = pd.read_csv(fn) #index_col=0 intentionally omitted
+        crdm_df = mf.remap_response(crdm_df,task='crdm')
+        crdm_df = mf.drop_pract_trials(crdm_df,task='crdm')
         crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task)
         conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)
         if response_rate < 0.05:
@@ -75,33 +77,35 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
 
         cols = ['crdm_trial_resp.corr','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p',
             'crdm_amb_lev']
-        data,percent_safe = mf.get_data(crdm_df,cols,task=task)
-        percent_lott = 1.0 - percent_safe
-        percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
-        # Estimate gamma, beta, and alpha
-        gba_guess = [0.15, 0.5, 0.6]
-        negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
-            disp=False)
+        for domain in crdm_df['crdm_domain'].unique():
 
-        parms_list = [gamma,beta,alpha]
-        at_bound = mf.check_to_bound(parms_list,bounds=gba_bounds)
-        if verbose:
-            print('Percent Risky Choice: {}'.format(percent_risk))
-            print("Negative log-likelihood: {}, gamma: {}, beta: {}, alpha: {}".
-                  format(negLL, gamma, beta, alpha))
+            data,percent_safe = mf.get_data(crdm_df,cols,domain=domain,task=task)
+            percent_lott = 1.0 - percent_safe
+            percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
+            # Estimate gamma, beta, and alpha
+            gba_guess = [0.15, 0.5, 0.6]
+            negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
+                disp=False)
 
-        parms = np.array(parms_list)
-        p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
-            ylabel='prob_choose_lottery',xlabel='SV difference (SV_lottery - SV_fixed)',verbose=True)
-        mf.store_SV(fn,crdm_df,SV,task=task,use_alpha=False)
-        LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
-        p_range = max(p_choose_reward) - min(p_choose_reward)
-        
-        row = [subject,task.upper(),response_rate,percent_lott,percent_risk,percent_ambig,
-            conf_1,conf_2,conf_3,conf_4,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,
-            correct,p_range,fig_fn]
-        row_df = pd.DataFrame([row],columns=df_cols)
-        df_out = pd.concat([df_out,row_df],ignore_index=True)
+            parms_list = [gamma,beta,alpha]
+            at_bound = mf.check_to_bound(parms_list,bounds=gba_bounds)
+            if verbose:
+                print('Percent Risky Choice: {}'.format(percent_risk))
+                print("Negative log-likelihood: {}, gamma: {}, beta: {}, alpha: {}".
+                    format(negLL, gamma, beta, alpha))
+
+            parms = np.array(parms_list)
+            p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
+                ylabel='prob_choose_lottery',xlabel='SV difference (SV_lottery - SV_fixed)',verbose=True)
+            mf.store_SV(fn,crdm_df,SV,task=task,use_alpha=False)
+            LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
+            p_range = max(p_choose_reward) - min(p_choose_reward)
+            
+            row = [subject,task.upper(),domain,response_rate,percent_lott,percent_risk,percent_ambig,
+                conf_1,conf_2,conf_3,conf_4,negLL,gamma,beta,alpha,at_bound,LL,LL0,AIC,BIC,R2,
+                correct,p_range,fig_fn]
+            row_df = pd.DataFrame([row],columns=df_cols)
+            df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         counter += 1
 
