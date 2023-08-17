@@ -169,7 +169,7 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
         df['alpha']=alpha_hat
 
     # select by domain: gain/loss
-    domain_col = '{}_domain'
+    domain_col = '{}_domain'.format(task)
     df = df.loc[df[domain_col]==domain]
     # select from columns
     data = df[cols]
