@@ -420,7 +420,10 @@ def count_trial_type(df_col=[],trial_type='task'):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
+def store_SV(fn,df,SV_delta,domain='gain',task='cdd',use_alpha=False,verbose=False):
+    # select by domain: gain/loss
+    domain_col = '{}_domain'.format(task)
+    df = df.loc[df[domain_col]==domain]
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
@@ -431,6 +434,8 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
 
     if task_nb != len(list(SV_delta)):
+        print('Number of task trials is : {}'.format(task_nb))
+        print('Number of entries in SV_delta is : {}'.format(len(list(SV_delta))))
         print('Somehow the number of tasks and length of subject values are different')
         raise ValueError
     try:

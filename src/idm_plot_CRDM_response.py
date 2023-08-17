@@ -97,7 +97,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
             parms = np.array(parms_list)
             p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
                 ylabel='prob_choose_lottery',xlabel='SV difference (SV_lottery - SV_fixed)',verbose=True)
-            mf.store_SV(fn,crdm_df,SV,task=task,use_alpha=False)
+            mf.store_SV(fn,crdm_df,SV,domain=domain,task=task,use_alpha=False)
             LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
             p_range = max(p_choose_reward) - min(p_choose_reward)
             
