@@ -51,13 +51,25 @@ def get_subject(fn,task='crdm'):
     else:
         return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
+
+# split dataframe by gains/losses
+def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
+    if verbose:
+        print(domain)
+    # select by domain: gain/loss
+    domain_col = '{}_domain'.format(task)
+    df = df.loc[df[domain_col]==domain]
+    return df
+
 # simple function to remap the responses
 def remap_response(df,task='crdm'):
     # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     resp_corr_col = '{}_trial_resp.corr'.format(task)
     # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
     # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
-    df[resp_corr_col] = 1.0 - df[resp_corr_col]
+    df_remap = pd.DataFrame({resp_corr_col:[1.0 - r for r in df[resp_corr_col].tolist()]})
+    df.update(df_remap)
+    # df[resp_corr_col] = 1.0 - df[resp_corr_col]
     return df
 
 # simple fucntion to drop practice trials. They are not used
@@ -168,9 +180,6 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
         # add alpha column, will change later
         df['alpha']=alpha_hat
 
-    # select by domain: gain/loss
-    domain_col = '{}_domain'.format(task)
-    df = df.loc[df[domain_col]==domain]
     # select from columns
     data = df[cols]
     # drop rows with NA int them
@@ -326,7 +335,7 @@ def check_to_bound(parms,bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
     return at_bound
 
 # Function to plot the model fit and the choice data. We plot probability of choice as a function of subjective value
-def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
+def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
     # extract probability and SV by plugging in estimates parameters into probability choice along with lists of values (choice_set_space)
     if task=='crdm':
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
@@ -344,7 +353,7 @@ def plot_save(index,fn,data,parms,task='crdm',ylabel='prob_choose_ambig',xlabel=
     # sorted for plotting
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
-    utility_dir,fig_fn = get_fig_fn(fn,use_alpha=use_alpha)
+    utility_dir,fig_fn = get_fig_fn(fn,domain=domain,use_alpha=use_alpha)
     plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
@@ -387,16 +396,15 @@ def make_dir(this_dir,verbose=False):
         os.makedirs(this_dir)
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
-def get_fig_fn(fn,use_alpha=False):
+def get_fig_fn(fn,domain='gain',use_alpha=False):
     fig_dir = os.path.dirname(fn).replace('split','utility')
     make_dir(fig_dir)
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
     utility_dir = os.path.dirname(os.path.dirname(fig_dir))
     # save_dir = os.path.dirname(split_dir)
+    fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit_alpha.eps')[1:]
-    else:
-        fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
+        fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
     return utility_dir,fig_fn
 
 # function to count the number of trial types, some data was giving a problem and length was not matching, this is fail safe
@@ -420,10 +428,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV_delta,domain='gain',task='cdd',use_alpha=False,verbose=False):
-    # select by domain: gain/loss
-    domain_col = '{}_domain'.format(task)
-    df = df.loc[df[domain_col]==domain]
+def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
