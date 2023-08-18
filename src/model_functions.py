@@ -428,7 +428,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
+def store_SV(fn,df,SV_delta,task='cdd',domain='gain',use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
@@ -457,10 +457,10 @@ def store_SV(fn,df,SV_delta,task='cdd',use_alpha=False,verbose=False):
     df_out['valence'] = 2.0*df_out[resp_corr_col] - 1.0
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
     df_out.drop(columns=[conf_resp,resp_corr_col,'valence'],inplace=True)
+    # save_dir = os.path.dirname(split_dir)
+    fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:
-        fn = fn.replace('split','utility').replace('.csv','_SV_hat_alpha.csv')
-    else:
-        fn = fn.replace('split','utility').replace('.csv','_SV_hat.csv')
+        fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
     if verbose:
         print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
     df_out.to_csv(fn,index=False)
