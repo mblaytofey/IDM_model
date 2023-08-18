@@ -73,9 +73,11 @@ def remap_response(df,task='crdm'):
     return df
 
 # simple fucntion to drop practice trials. They are not used
-def drop_pract_trials(df,task='crdm'):
+def drop_pract(df,task='crdm'):
     trial_type_col = '{}_trial_type'.format(task)
     df = df.loc[df[trial_type_col]=='task']
+    cols = [c for c in list(df) if 'pract' not in c]
+    df = df[cols]
     return df
 
 # Function for dropping blank responses found in either the task or the confidence measure.
@@ -91,13 +93,13 @@ def drop_non_responses(df,task='crdm'):
         print('We found no column with a trial_resp.keys in the name, check .csv file before continuing. These are the columns names:')
         print(list(df))
         sys.exit()
-    if len(keys_cols)==2:
+    if len(keys_cols)==1:
         # this should be the most common number of keys_cols
-        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna()
-    elif len(keys_cols)==1:
-        print('**WARNING** Only found one trial_resp.keys : {}'.format(keys_cols))
-        print('We will continue with what we have but check to make sure this is what you want')
         df['responded'] = df[keys_cols[0]].notna()
+    elif len(keys_cols)==2:
+        # this should be the most common number of keys_cols
+        print('**WARNING** Found two trial_resp.keys : {}'.format(keys_cols))
+        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna()
     elif len(keys_cols)==3:
         print('**WARNING** Found three trial_resp.keys : {}'.format(keys_cols))
         print('We will continue with what we have but check to make sure this is what you want')
@@ -357,7 +359,8 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
-        plt.title(get_subject(fn,task=task),fontsize=15)
+        title = '{} {}'.format(get_subject(fn,task=task),domain)
+        plt.title(title,fontsize=15)
         print('Saving to : /utility_dir/ {}'.format(utility_dir))
     # plt.savefig(os.path.join(split_dir,fig_fn))
     plt.savefig(os.path.join(utility_dir,fig_fn),format='eps')

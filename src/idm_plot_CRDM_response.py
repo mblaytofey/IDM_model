@@ -35,7 +35,7 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
                             domain='gain',task='crdm',verbose='False'):
     
     crdm_df = mf.remap_response(crdm_df,task=task)
-    crdm_df = mf.drop_pract_trials(crdm_df,task=task)
+    crdm_df = mf.drop_pract(crdm_df,task=task)
     crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)
     if response_rate < 0.05:
@@ -111,12 +111,17 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = mf.get_subject(fn,task=task)
         df_orig = pd.read_csv(fn) #index_col=0 intentionally omitted
+        # let's do combined gains and losses
+        domain = 'combined'
+        row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
+                        gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
+        df_out = pd.concat([df_out,row_df],ignore_index=True)
+
         for domain in df_orig['crdm_domain'].dropna().unique():
             crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
 
             row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                             gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
-            
             df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         counter += 1
