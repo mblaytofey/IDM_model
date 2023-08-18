@@ -117,12 +117,13 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
                         gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
-        for domain in df_orig['crdm_domain'].dropna().unique():
-            crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
-
-            row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
-                            gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
-            df_out = pd.concat([df_out,row_df],ignore_index=True)
+        domain_options = df_orig['crdm_domain'].dropna().unique()
+        if 'loss' in domain_options:
+            for domain in domain_options:
+                crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
+                row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
+                                gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
+                df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         counter += 1
 
