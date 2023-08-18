@@ -31,11 +31,57 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     CRDM_df = pd.read_csv(CRDM_fn,index_col=0)
     # using .loc function to find the alpha value, but still need get item
     try:
-        alpha_hat = CRDM_df.loc[CRDM_df['subject']==subject,'alpha'].item()
+        alpha_hat = CRDM_df.loc[(CRDM_df['subject']==subject) & (CRDM_df['domain']=='gain'),'alpha'].item()
     except ValueError:
         print('We have a ValueError, will just set alpha to 1.0')
         alpha_hat = 1.0
     return alpha_hat
+
+def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',df_cols=[],
+                gk_bounds = ((0,8),(0.0022,7.875)),
+                task='crdm',use_alpha=False,verbose=False):
+
+    cdd_df = mf.remap_response(cdd_df,task=task)
+    cdd_df = mf.drop_pract(cdd_df,task=task)
+    cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task)
+    conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
+    if response_rate < 0.05:
+        print('**ERROR** Low response rate, cannot model this subjects CDD data')
+        return
+    if not columns_there(cdd_df):
+        return
+    
+    # default value if not using alpha for modeling
+    alpha_hat=1
+    if use_alpha:
+        alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
+
+    cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
+    data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat,task=task)
+    # Estimate gamma and kappa with or without alpha
+    gk_guess = [0.15, 0.5]
+    negLL,gamma,kappa = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
+
+    parms_list = [gamma,kappa]
+    at_bound = mf.check_to_bound(parms_list,bounds=gk_bounds)
+    if verbose:
+        print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
+        print('Percent Impulse Choice: {}'.format(percent_impulse))
+        print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
+                format(negLL, gamma, kappa))
+
+    parms = np.array(parms_list)
+    p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
+        ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',
+        use_alpha=use_alpha,verbose=True)
+    mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,use_alpha=use_alpha)
+    LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
+    p_range = max(p_choose_reward) - min(p_choose_reward)
+
+    row = [subject,task.upper(),response_rate,percent_impulse,conf_1,conf_2,conf_3,conf_4,
+        negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
+    row_df = pd.DataFrame([row],columns=df_cols)
+    return row_df
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
 def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,verbose=False):
@@ -63,44 +109,9 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         print('Working on CDD csv file {} of {}:\n{}'.format(index+1,len(cdd_files),fn))
         subject = mf.get_subject(fn,task=task)
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
-        cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task)
-        conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
-        if response_rate < 0.05:
-            print('**ERROR** Low response rate, cannot model this subjects CDD data')
-            continue
 
-        if not columns_there(cdd_df):
-            continue
-        
-        # default value if not using alpha for modeling
-        alpha_hat=1
-        if use_alpha:
-            alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
-        cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
-        data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat,task=task)
-        # Estimate gamma and kappa with or without alpha
-        gk_guess = [0.15, 0.5]
-        negLL,gamma,kappa = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
-
-        parms_list = [gamma,kappa]
-        at_bound = mf.check_to_bound(parms_list,bounds=gk_bounds)
-        if verbose:
-            print('From CRDM we estimated the following alpha value : {}'.format(alpha_hat))
-            print('Percent Impulse Choice: {}'.format(percent_impulse))
-            print("Negative log-likelihood: {}, gamma: {}, kappa: {}".
-                  format(negLL, gamma, kappa))
-
-        parms = np.array(parms_list)
-        p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
-            ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',
-            use_alpha=use_alpha,verbose=True)
-        mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,use_alpha=use_alpha)
-        LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
-        p_range = max(p_choose_reward) - min(p_choose_reward)
-        
-        row = [subject,task.upper(),response_rate,percent_impulse,conf_1,conf_2,conf_3,conf_4,
-            negLL,gamma,kappa,alpha_hat,at_bound,LL,LL0,AIC,BIC,R2,correct,p_range,fig_fn]
-        row_df = pd.DataFrame([row],columns=df_cols)
+        row_df = estimate_CDD(cdd_df,df_dir,fn,index,batch_name=batch_name,subject=subject,df_cols=df_cols,
+                            gk_bounds=gk_bounds,task=task,use_alpha=use_alpha,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
     # Save modeled parameters to modeled results
@@ -109,10 +120,16 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
 
 def main():
     # if running this script on its own, start here
-    # split_dir = '/Users/pizarror/mturk/idm_data/split'
+    # split_dir = '/Volumes/UCDN/datasets/IDM/split'
     split_dir = mf.get_split_dir()
-    # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/raw/'
+    # alpha is set to 1.0
+    print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
     load_estimate_CDD_save(split_dir)
+
+    # alpha used estimated from CRDM for gain trials
+    print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
+    print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding CRDM files')
+    load_estimate_CDD_save(split_dir, use_alpha=True)
 
 
 

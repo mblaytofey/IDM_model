@@ -338,8 +338,12 @@ def check_to_bound(parms,bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
 
 # Function to plot the model fit and the choice data. We plot probability of choice as a function of subjective value
 def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
+    # CDD title, add domain for CRDM
+    title = get_subject(fn,task=task)
+
     # extract probability and SV by plugging in estimates parameters into probability choice along with lists of values (choice_set_space)
     if task=='crdm':
+        title = '{} {}'.format(title,domain)
         choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
         p_choose_reward,SV_null,SV_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)
     elif task=='cdd':
@@ -359,7 +363,6 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
-        title = '{} {}'.format(get_subject(fn,task=task),domain)
         plt.title(title,fontsize=15)
         print('Saving to : /utility_dir/ {}'.format(utility_dir))
     # plt.savefig(os.path.join(split_dir,fig_fn))
