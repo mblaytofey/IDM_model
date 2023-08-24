@@ -187,22 +187,24 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
     # drop rows with NA int them
     data = data.dropna()
 
-    resp_corr_col = '{}_trial_resp.corr'.format(task)
+    choice_col = '{}_choice'.format(task)
+    # resp_corr_col = '{}_trial_resp.corr'.format(task)
     # crdm: percent_safe, cdd: percent_impulse
-    percent_null = 1.0 - 1.0*data[resp_corr_col].sum()/data[resp_corr_col].shape[0]
+    percent_null = 1.0 - 1.0*data[choice_col].sum()/data[choice_col].shape[0]
 
     return data,percent_null
 
 def percent_risk_ambig(df,task='crdm'):
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
-    resp_corr_col = '{}_trial_resp.corr'.format(task)
+    choice_col = '{}_choice'.format(task)
+    # resp_corr_col = '{}_trial_resp.corr'.format(task)
     amb_lev_col = next(c for c in list(df) if 'crdm_amb_lev' in c)
 
     df_risk = df.loc[df[amb_lev_col]==0]
     df_ambig = df.loc[df[amb_lev_col]>0]
 
-    percent_risk = 1.0*df_risk[resp_corr_col].sum()/df_risk[resp_corr_col].shape[0]
-    percent_ambig = 1.0*df_ambig[resp_corr_col].sum()/df_ambig[resp_corr_col].shape[0]
+    percent_risk = 1.0*df_risk[choice_col].sum()/df_risk[choice_col].shape[0]
+    percent_ambig = 1.0*df_ambig[choice_col].sum()/df_ambig[choice_col].shape[0]
     
     return percent_risk,percent_ambig
 
@@ -231,13 +233,15 @@ def fit_computational_model(data, guess=[1,0.5,0.6],bounds=((0,8),(1e-8,6.4),(0.
 
 def get_task(data):
     cols = sorted(list(data))
-    resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
+    choice_col = next(c for c in cols if ('choice' in c) and ('bonus' not in c))
+    # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     # let's check choice column : trial_resp.corr
-    if 'crdm' in resp_corr_col:
+    if 'crdm' in choice_col:
         return 'crdm'
-    elif 'cdd' in resp_corr_col:
+    elif 'cdd' in choice_col:
         return 'cdd'
     else:
+        print(choice_col)
         print('We could not find task name from colums : {}'.format(cols))
         sys.exit()
 
@@ -438,7 +442,8 @@ def store_SV(fn,df,SV_delta,task='cdd',domain='gain',use_alpha=False,verbose=Fal
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
-    resp_corr_col = '{}_trial_resp.corr'.format(task)
+    choice_col = '{}_choice'.format(task)
+    # resp_corr_col = '{}_trial_resp.corr'.format(task)
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
@@ -457,12 +462,12 @@ def store_SV(fn,df,SV_delta,task='cdd',domain='gain',use_alpha=False,verbose=Fal
     except ValueError:
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
-    df_out = df.loc[df[trial_type_col]=='task',[conf_resp,resp_corr_col,'SV_delta','ambig_trial']].reset_index(drop=True)
+    df_out = df.loc[df[trial_type_col]=='task',[conf_resp,choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)
     df_out = df_out.astype(float)
     # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out['valence'] = 2.0*df_out[resp_corr_col] - 1.0
+    df_out['valence'] = 2.0*df_out[choice_col] - 1.0
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
-    df_out.drop(columns=[conf_resp,resp_corr_col,'valence'],inplace=True)
+    df_out.drop(columns=[conf_resp,choice_col,'valence'],inplace=True)
     # save_dir = os.path.dirname(split_dir)
     fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:

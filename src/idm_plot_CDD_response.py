@@ -8,7 +8,7 @@ from idm_split_data import make_dir
 
 
 def columns_there(df):
-    cols_check = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
+    cols_check = ['cdd_choice','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
                   'cdd_delay_wait','cdd_conf_resp.keys']
     for c in cols_check:
         if c not in list(df):
@@ -41,7 +41,7 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
                 gk_bounds = ((0,8),(0.0022,7.875)),
                 task='crdm',use_alpha=False,verbose=False):
 
-    cdd_df = mf.remap_response(cdd_df,task=task)
+    # cdd_df = mf.remap_response(cdd_df,task=task)
     cdd_df = mf.drop_pract(cdd_df,task=task)
     cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
@@ -56,7 +56,7 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
     if use_alpha:
         alpha_hat = get_alpha_hat(model_dir=df_dir,batch_name=batch_name,subject=subject)
 
-    cols = ['cdd_trial_resp.corr','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
+    cols = ['cdd_choice','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
     data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat,task=task)
     # Estimate gamma and kappa with or without alpha
     gk_guess = [0.15, 0.5]
@@ -91,8 +91,8 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
     # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
     df_cols = ['subject','task','response_rate','percent_impulse','conf_1','conf_2','conf_3','conf_4',
-        'negLL','gamma','kappa','alpha','at_bound','LL','LL0','AIC','BIC','R2','correct','prob_span',
-        'fig_fn']
+        'negLL','gamma','kappa','alpha','at_bound','LL','LL0','AIC','BIC','R2','softmax_accuracy',
+        'softmax_range','fig_fn']
     df_out = pd.DataFrame(columns=df_cols)
 
     utility_dir = split_dir.replace('split','utility')
