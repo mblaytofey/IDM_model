@@ -38,8 +38,8 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     return alpha_hat
 
 def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',df_cols=[],
-                gk_bounds = ((0,8),(0.0022,7.875)),
-                task='crdm',use_alpha=False,conf_drop=True,verbose=False):
+                gk_bounds = ((0,8),(0.0022,7.875)),task='cdd',
+                use_alpha=False,conf_drop=True,verbose=False):
 
     # cdd_df = mf.remap_response(cdd_df,task=task)
     cdd_df = mf.drop_pract(cdd_df,task=task)
