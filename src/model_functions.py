@@ -82,7 +82,7 @@ def drop_pract(df,task='crdm'):
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
-def drop_non_responses(df,task='crdm'):
+def drop_non_responses(df,task='crdm',verbose=False):
     # original length of df before dropping rows
     df_len = df.shape[0]
     # initialized to avoid errors
@@ -111,7 +111,8 @@ def drop_non_responses(df,task='crdm'):
 
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
-        print('\n**WARNING** We dropped {0} of {1} non responses that were left blank'.format(non_responses_nb,df_len))
+        if verbose:
+            print('\n**WARNING** We dropped {0} of {1} non responses that were left blank'.format(non_responses_nb,df_len))
         df = df.loc[df['responded'],:].reset_index(drop=True)
 
     # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
@@ -123,7 +124,7 @@ def drop_non_responses(df,task='crdm'):
     # Compute response_rate based on non_responses_nb and None_drops
     response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
 
-    if response_rate < 1.0:
+    if verbose and (response_rate < 1.0):
         print('The {0} drop(s) resulted in response_rate : {1}\n'.format(non_responses_nb+None_drops,response_rate))
 
     return df,response_rate
