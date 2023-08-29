@@ -32,11 +32,11 @@ def rename_columns(df):
 
 def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
                             gba_bounds = ((0,8),(-4.167,4.167),(0.125,4.341)),
-                            domain='gain',task='crdm',verbose=False):
+                            domain='gain',task='crdm',conf_drop=True,verbose=False):
     
     # crdm_df = mf.remap_response(crdm_df,task=task)
     crdm_df = mf.drop_pract(crdm_df,task=task)
-    crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task,verbose=verbose)
+    crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task,conf_drop=conf_drop,verbose=verbose)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)
     if response_rate < 0.05:
         print('**ERROR** Low response rate, cannot model this subjects CRDM data')
@@ -87,9 +87,11 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbose=False):
+def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_drop=True,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
+    if conf_drop:
+        print('\n **WARNING** The script will drop confidence responses that are either blank or None\n')
     crdm_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
 
     df_cols = ['subject','task','domain','response_rate','percent_lottery','percent_risk','percent_ambiguity',
@@ -117,7 +119,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
         # fn_domain = fn.replace('.csv','_{}.csv'.format(domain))
         # df_orig.to_csv(fn_domain)
         row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
-                        gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
+                        gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
+                        verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         domain_options = df_orig['crdm_domain'].dropna().unique()
@@ -127,7 +130,8 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',verbos
                 # fn_domain = fn.replace('.csv','{}.csv'.format(domain))
                 # crdm_df.to_csv(fn_domain)
                 row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
-                                gba_bounds = gba_bounds,domain=domain,task=task,verbose=verbose)
+                                gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
+                                verbose=verbose)
                 df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         counter += 1
@@ -147,7 +151,10 @@ def main():
     split_dir = mf.get_split_dir()
     # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
     # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
-    load_estimate_CRDM_save(split_dir=split_dir,verbose=True)
+    conf_drop = False
+    if 'SDM' in split_dir:
+        conf_drop=True
+    load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,verbose=True)
 
 
 if __name__ == "__main__":

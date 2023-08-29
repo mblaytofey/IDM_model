@@ -39,11 +39,11 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
 
 def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',df_cols=[],
                 gk_bounds = ((0,8),(0.0022,7.875)),
-                task='crdm',use_alpha=False,verbose=False):
+                task='crdm',use_alpha=False,conf_drop=True,verbose=False):
 
     # cdd_df = mf.remap_response(cdd_df,task=task)
     cdd_df = mf.drop_pract(cdd_df,task=task)
-    cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task,verbose=verbose)
+    cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task,conf_drop=conf_drop,verbose=verbose)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
     if response_rate < 0.05:
         print('**ERROR** Low response rate, cannot model this subjects CDD data')
@@ -84,9 +84,11 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
     return row_df
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,verbose=False):
+def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,conf_drop=True,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
+    if conf_drop:
+        print('\n **WARNING** The script will drop confidence responses that are either blank or None\n')
     cdd_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
     # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
@@ -111,7 +113,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
 
         row_df = estimate_CDD(cdd_df,df_dir,fn,index,batch_name=batch_name,subject=subject,df_cols=df_cols,
-                            gk_bounds=gk_bounds,task=task,use_alpha=use_alpha,verbose=verbose)
+                            gk_bounds=gk_bounds,task=task,use_alpha=use_alpha,conf_drop=conf_drop,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
     # Save modeled parameters to modeled results
@@ -122,14 +124,17 @@ def main():
     # if running this script on its own, start here
     # split_dir = '/Volumes/UCDN/datasets/IDM/split'
     split_dir = mf.get_split_dir()
+    conf_drop = False
+    if 'SDM' in split_dir:
+        conf_drop=True    
     # alpha is set to 1.0
     print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
-    load_estimate_CDD_save(split_dir)
+    load_estimate_CDD_save(split_dir,use_alpha=False,conf_drop=conf_drop,verbose=True)
 
     # alpha used estimated from CRDM for gain trials
     print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
     print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding CRDM files')
-    load_estimate_CDD_save(split_dir, use_alpha=True)
+    load_estimate_CDD_save(split_dir, use_alpha=True,conf_drop=conf_drop,verbose=True)
 
 
 
