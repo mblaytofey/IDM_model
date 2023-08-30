@@ -82,18 +82,43 @@ def drop_pract(df,task='crdm'):
 
 # Function for dropping blank responses found in either the task or the confidence measure.
 # We cannot use data that is blank, so we remove and count the number of blanks found and report it
+## this need to have the flexibility to work for both when we have Nan or None 
+## these two are the options encountered so far
 def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
+
     # original length of df before dropping rows
     df_len = df.shape[0]
-    # initialized to avoid errors
-    non_responses_nb,None_drops = 0,0
 
+    # get the relevant column names
     keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
+    conf_resp = '{}_conf_resp.keys'.format(task)
+
+    df,nan_nb = drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=conf_drop,verbose=verbose)
+
+    if conf_drop:
+        df,none_nb = drop_by_str(df,col=conf_resp,match_str='None')
+    else:
+        df,none_nb = drop_by_str(df,col=keys_cols[0],match_str='None')
+
+    # Compute response_rate based on non_responses_nb and None_drops
+    response_rate = 1.0 - float(nan_nb+none_nb)/df_len
+
+    if verbose and (response_rate < 1.0):
+        print('The {0} drop(s) resulted in response_rate : {1}\n'.format(nan_nb+none_nb,response_rate))
+
+    return df,response_rate
+
+def drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=True,verbose=False):
+    # initialized to avoid errors
+    non_responses_nb = 0
     if not keys_cols:
         print('We found no column with a trial_resp.keys in the name, check .csv file before continuing. These are the columns names:')
         print(list(df))
         sys.exit()
-    if len(keys_cols)==1:
+    if conf_drop:
+        # dropping Nan from response and confidence 
+        df['responded'] = df[conf_resp].notna()
+    elif len(keys_cols)==1:
         # this should be the most common number of keys_cols
         df['responded'] = df[keys_cols[0]].notna()
     elif len(keys_cols)==2:
@@ -112,26 +137,13 @@ def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
         if verbose:
-            print('\n**WARNING** We dropped {0} of {1} non responses that were left blank'.format(non_responses_nb,df_len))
+            print('\n**WARNING** We dropped {0} of {1} non responses that were Nan'.format(non_responses_nb,df_len))
         df = df.loc[df['responded'],:].reset_index(drop=True)
-
-    # this 'None' showed up in crdm_conf_resp.keys for SDAN data. May come up again for inperson survey
-    # From SDM **WARNING** We dropped 99 rows from column cdd_pract_conf_resp.keys containing >>>None<<<
-    # conf_resp_keys_cols = [c for c in list(df) if 'conf_resp.keys' in c]
-    if conf_drop:
-        conf_resp = '{}_conf_resp.keys'.format(task)
-        df,None_drops = drop_row_by_col(df,col=conf_resp,match_str='None')
-
-    # Compute response_rate based on non_responses_nb and None_drops
-    response_rate = 1.0 - float(non_responses_nb+None_drops)/df_len
-
-    if verbose and (response_rate < 1.0):
-        print('The {0} drop(s) resulted in response_rate : {1}\n'.format(non_responses_nb+None_drops,response_rate))
-
-    return df,response_rate
+    return df,non_responses_nb
 
 # written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
-def drop_row_by_col(df,col='crdm_conf_resp.keys',match_str='None'):
+# The None shows up as a Nan on my laptop but 'None' in other computers
+def drop_by_str(df,col='crdm_conf_resp.keys',match_str='None'):
     drops=0
     if df[ col ].dtype == 'float64':
         return df,drops

@@ -75,7 +75,9 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     parms = np.array(parms_list)
     p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,domain=domain,task=task,
         ylabel='prob_choose_lottery',xlabel='SV difference (SV_lottery - SV_fixed)',verbose=True)
-    mf.store_SV(fn,crdm_df,SV,domain=domain,task=task,use_alpha=False)
+    if not conf_drop:
+        # if we keep the trials where there is no confidence measure we cannot store SV_hat for CASANDRE
+        mf.store_SV(fn,crdm_df,SV,domain=domain,task=task,use_alpha=False)
     LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=3)
     p_range = max(p_choose_reward) - min(p_choose_reward)
     
@@ -151,7 +153,7 @@ def main():
     split_dir = mf.get_split_dir()
     # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
     # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
-    conf_drop = True
+    conf_drop = False
     if 'SDM' in split_dir:
         conf_drop=True
     load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,verbose=True)
