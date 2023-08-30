@@ -144,6 +144,7 @@ def drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=True,verbose=False):
 
 # written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
 # The None shows up as a Nan on my laptop but 'None' in other computers
+# crdm_confkey
 def drop_by_str(df,col='crdm_conf_resp.keys',match_str='None'):
     drops=0
     if df[ col ].dtype == 'float64':
