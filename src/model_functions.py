@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import glob as glob
 import os,sys
-import scipy as sp
+# import scipy as sp
+from scipy.stats import bernoulli
 from scipy import optimize
 from scipy.interpolate import make_interp_spline
 import math
@@ -55,7 +56,7 @@ def get_subject(fn,task='crdm'):
 # split dataframe by gains/losses
 def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
     if verbose:
-        print(domain)
+        print('Working on this domain: {}'.format(domain))
     # select by domain: gain/loss
     domain_col = '{}_domain'.format(task)
     df = df.loc[df[domain_col]==domain]
@@ -281,7 +282,8 @@ def function_negLL(parms,data):
     p_choose_reward[p_choose_reward==1] = 1-1e-6
     
     # Log-likelihood
-    LL = (choice==1)*np.log(p_choose_reward) + ((choice==0))*np.log(1-p_choose_reward)
+    # LL = (choice==1)*np.log(p_choose_reward) + ((choice==0))*np.log(1-p_choose_reward)
+    LL = bernoulli.logpmf(choice, p_choose_reward)
     # Sum of -log-likelihood
     negLL = -sum(LL)
 

@@ -57,7 +57,6 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
         'crdm_amb_lev']
 
     data,percent_safe = mf.get_data(crdm_df,cols,task=task)
-    print(list(data))
     percent_lott = 1.0 - percent_safe
     percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
     # Estimate gamma, beta, and alpha
@@ -116,25 +115,34 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = mf.get_subject(fn,task=task)
         df_orig = pd.read_csv(fn) #index_col=0 intentionally omitted
-        # let's do combined gains and losses
-        domain = 'combined'
-        # fn_domain = fn.replace('.csv','_{}.csv'.format(domain))
-        # df_orig.to_csv(fn_domain)
-        row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
+
+        # let's forget combined for now
+        # domain = 'combined'
+        # row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
+        #                 gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
+        #                 verbose=verbose)
+        # df_out = pd.concat([df_out,row_df],ignore_index=True)
+
+        # gain is always there
+        domain = 'gain'
+        crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
+        # fn_domain = fn.replace('.csv','_{}.csv'.format(domain)).replace('split','utility')
+        # crdm_df.to_csv(fn_domain)
+        row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                         gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
                         verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
-        domain_options = df_orig['crdm_domain'].dropna().unique()
-        if 'loss' in domain_options:
-            for domain in domain_options:
-                crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
-                # fn_domain = fn.replace('.csv','{}.csv'.format(domain))
-                # crdm_df.to_csv(fn_domain)
-                row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
-                                gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
-                                verbose=verbose)
-                df_out = pd.concat([df_out,row_df],ignore_index=True)
+        # domain_options = df_orig['crdm_domain'].dropna().unique()
+        if 'loss' in df_orig['crdm_domain'].dropna().unique():
+            domain = 'loss'                
+            crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
+            # fn_domain = fn.replace('.csv','_{}.csv'.format(domain)).replace('split','utility')
+            # crdm_df.to_csv(fn_domain)
+            row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
+                            gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
+                            verbose=verbose)
+            df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         counter += 1
 
