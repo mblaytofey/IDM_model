@@ -272,7 +272,6 @@ def function_negLL(parms,data):
         cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
         # choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
         choice,value_null,value_reward,p_null,p_reward,ambiguity = extract_data(data,cols=cols)
-        print(value_null)
         p_choose_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)[0]
     elif task == 'cdd':
         cols = ['cdd_choice','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
@@ -301,7 +300,6 @@ def extract_data(data,cols=[]):
     data_cols = ()
     for c in cols:
         data_cols += (data[c].T.values.tolist(),)
-    # choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
     return data_cols
 
 def prob_softmax(SV1,SV0,gamma=0.5):

@@ -29,6 +29,29 @@ def rename_columns(df):
     df.rename(columns=cols_dict,inplace=True)
     return df
 
+def extract_guess(fn,subject,domain='gain'):
+    df = pd.read_csv(fn,index_col=0)
+    row = df.loc[(df['subject']==subject) & (df['domain']==domain)]
+    # print(row)
+    if domain == 'gain':
+        gba_guess = [0.009, 1.62, 1.65]
+    elif domain == 'loss':
+        gba_guess = [1.08, -0.61, 0.44]
+    if domain == 'combined':
+        gba_guess = [0.10, 0.5, 0.9]
+    return gba_guess
+                  
+
+def grab_gba_guess(fn,subject,domain='gain',task='CRDM'):
+    # /Volumes/UCDN/datasets/ICR/split/NIH116_C/crdm/NIH116_C_crdm.csv
+    print(fn)
+    utility_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn))).replace('split','utility')
+    task_analysis_fn = os.path.join(utility_dir,'split_{}_analysis.csv'.format(task))
+    if os.path.exists(task_analysis_fn):
+        gba_guess = extract_guess(task_analysis_fn,subject,domain=domain)
+    else:
+        gba_guess = [0.15, 0.5, 0.6]
+    return gba_guess
 
 def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
                             gba_bounds = ((0,8),(-4.167,4.167),(0.125,4.341)),
@@ -59,6 +82,7 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     percent_lott = 1.0 - percent_safe
     percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
     # Estimate gamma, beta, and alpha
+    # gba_guess = grab_gba_guess(fn,subject,domain=domain)
     gba_guess = [0.15, 0.5, 0.6]
     negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
         disp=False)
@@ -137,6 +161,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
             df_out = pd.concat([df_out,row_df],ignore_index=True)
 
             domain = 'combined'
+            print('Working on this domain: {}'.format(domain))
             row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
                             gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
                             verbose=verbose)
