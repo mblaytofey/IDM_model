@@ -269,10 +269,15 @@ def function_negLL(parms,data):
 
     task = get_task(data)
     if task == 'crdm':
-        choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
+        cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
+        # choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
+        choice,value_null,value_reward,p_null,p_reward,ambiguity = extract_data(data,cols=cols)
+        print(value_null)
         p_choose_reward = probability_choice(parms,value_null,value_reward,p_null=p_null,p_reward=p_reward,ambiguity=ambiguity,task=task)[0]
     elif task == 'cdd':
-        choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
+        cols = ['cdd_choice','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
+        # choice,value_null,value_reward,time_null,time_reward,alpha = data.T.values.tolist()
+        choice,value_null,value_reward,time_null,time_reward,alpha = extract_data(data,cols=cols)
         p_choose_reward = probability_choice(parms,value_null,value_reward,time_null=time_null,time_reward=time_reward,alpha=alpha,task=task)[0]
 
     p_choose_reward = np.array(p_choose_reward)
@@ -290,6 +295,14 @@ def function_negLL(parms,data):
 
     return negLL
 
+
+def extract_data(data,cols=[]):
+    cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
+    data_cols = ()
+    for c in cols:
+        data_cols += (data[c].T.values.tolist(),)
+    # choice,value_null,value_reward,p_null,p_reward,ambiguity = data.T.values.tolist()
+    return data_cols
 
 def prob_softmax(SV1,SV0,gamma=0.5):
     # compute probability using softmax function, return 0 if OverlowError is thrown

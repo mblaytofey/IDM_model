@@ -53,8 +53,7 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
             print('Renaming worked, we will continue as such')
             print(crdm_df)
 
-    cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p',
-        'crdm_amb_lev']
+    cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
 
     data,percent_safe = mf.get_data(crdm_df,cols,task=task)
     percent_lott = 1.0 - percent_safe
@@ -107,7 +106,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
     df_fn = os.path.join(df_dir,'{}_CRDM_analysis.csv'.format(batch_name))
 
     # gamma, beta, alpha bounds
-    # beta should be [-1.something, 1.something] look at choice set space to determine
+    # bounds determine by model_simulation
     gba_bounds = ((0,8),(-4.167,4.167),(0.125,4.341))
     counter = 0
     for index,fn in enumerate(crdm_files):
@@ -115,13 +114,6 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
         print('Working on CRDM csv file {} of {}:\n{}'.format(index+1,len(crdm_files),fn))
         subject = mf.get_subject(fn,task=task)
         df_orig = pd.read_csv(fn) #index_col=0 intentionally omitted
-
-        # let's forget combined for now
-        # domain = 'combined'
-        # row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
-        #                 gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
-        #                 verbose=verbose)
-        # df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         # gain is always there
         domain = 'gain'
@@ -143,6 +135,12 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
                             gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
                             verbose=verbose)
             df_out = pd.concat([df_out,row_df],ignore_index=True)
+
+            domain = 'combined'
+            row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
+                            gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
+                            verbose=verbose)
+            df_out = pd.concat([df_out,row_df],ignore_index=True)            
 
         counter += 1
 
