@@ -126,8 +126,8 @@ def main():
     # if running this script on its own, start here
     # split_dir = '/Volumes/UCDN/datasets/IDM/split'
     split_dir = mf.get_split_dir()
-    conf_drop = False
-    if 'SDM' in split_dir:
+    conf_drop = True
+    if 'ICR' in split_dir:
         conf_drop=True
     # alpha is set to 1.0
     print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')

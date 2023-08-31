@@ -159,9 +159,9 @@ def main():
     split_dir = mf.get_split_dir()
     # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
     # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
-    conf_drop = False
-    if 'SDM' in split_dir:
-        conf_drop=True
+    conf_drop = True
+    if 'ICR' in split_dir:
+        conf_drop=False
     load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,verbose=True)
 
 
