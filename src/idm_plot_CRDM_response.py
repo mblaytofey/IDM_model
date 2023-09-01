@@ -1,6 +1,6 @@
 import pandas as pd
 import os,sys
-import glob
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import model_functions as mf
@@ -189,12 +189,13 @@ def main():
     split_dir = mf.get_split_dir()
     # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
     # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
+    t0 = time.time()
     conf_drop = True
     if 'ICR' in split_dir:
         conf_drop=False
     nb_runs = 1000
     load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,nb_runs=nb_runs,verbose=True)
-
+    print('Time to complete modeling : {} minutes'.format((time.time() - t0)/60.0))
 
 if __name__ == "__main__":
     main()
