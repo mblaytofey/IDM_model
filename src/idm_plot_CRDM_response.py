@@ -29,33 +29,41 @@ def rename_columns(df):
     df.rename(columns=cols_dict,inplace=True)
     return df
 
-def extract_guess(fn,subject,domain='gain'):
-    df = pd.read_csv(fn,index_col=0)
-    row = df.loc[(df['subject']==subject) & (df['domain']==domain)]
-    # print(row)
-    if domain == 'gain':
-        gba_guess = [0.009, 1.62, 1.65]
-    elif domain == 'loss':
-        gba_guess = [1.08, -0.61, 0.44]
-    if domain == 'combined':
-        gba_guess = [0.10, 0.5, 0.9]
-    return gba_guess
+def check_bound(guess,bound=(0,10)):
+    if guess < bound[0]:
+        return bound[0]
+    elif guess > bound[1]:
+        return bound[1]
+    else: 
+        return guess
                   
 
-def grab_gba_guess(fn,subject,domain='gain',task='CRDM'):
-    # /Volumes/UCDN/datasets/ICR/split/NIH116_C/crdm/NIH116_C_crdm.csv
-    print(fn)
-    utility_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn))).replace('split','utility')
-    task_analysis_fn = os.path.join(utility_dir,'split_{}_analysis.csv'.format(task))
-    if os.path.exists(task_analysis_fn):
-        gba_guess = extract_guess(task_analysis_fn,subject,domain=domain)
-    else:
-        gba_guess = [0.15, 0.5, 0.6]
-    return gba_guess
+def grab_gba_guess(bounds = ((0,8),(-4.167,4.167),(0.125,4.341))):
+    gamma = np.random.uniform(low=bounds[0][0],high=bounds[0][1])
+    beta = np.random.uniform(low=bounds[1][0],high=bounds[1][1])
+    alpha = np.random.uniform(low=bounds[2][0],high=bounds[2][1])
+
+    return [gamma,beta,alpha]
+
+def run_multiple_fits(data,nb_runs=1,gba_bounds=((0,8),(-4.167,4.167),(0.125,4.341))):
+    # initiate something very small
+    negLL = sys.maxsize
+    for run in range(nb_runs):
+        # print('Executing run {} of {}'.format(run+1,nb_runs))
+        # Estimate gamma, beta, and alpha
+        gba_guess = grab_gba_guess(bounds=gba_bounds)
+        # gba_guess = [0.15, 0.5, 0.6]
+        negLL_run,gamma_run,beta_run,alpha_run = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
+            disp=False)
+        if negLL_run < negLL:
+            # update parameters
+            print('Found better model, will save it.')
+            negLL,gamma,beta,alpha = negLL_run,gamma_run,beta_run,alpha_run
+    return negLL,gamma,beta,alpha
 
 def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
                             gba_bounds = ((0,8),(-4.167,4.167),(0.125,4.341)),
-                            domain='gain',task='crdm',conf_drop=True,verbose=False):
+                            domain='gain',task='crdm',conf_drop=True,nb_runs=1,verbose=False):
     
     # crdm_df = mf.remap_response(crdm_df,task=task)
     crdm_df = mf.drop_pract(crdm_df,task=task)
@@ -81,11 +89,8 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     data,percent_safe = mf.get_data(crdm_df,cols,task=task)
     percent_lott = 1.0 - percent_safe
     percent_risk,percent_ambig = mf.percent_risk_ambig(data,task=task)
-    # Estimate gamma, beta, and alpha
-    # gba_guess = grab_gba_guess(fn,subject,domain=domain)
-    gba_guess = [0.15, 0.5, 0.6]
-    negLL,gamma,beta,alpha = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
-        disp=False)
+
+    negLL,gamma,beta,alpha = run_multiple_fits(data,nb_runs=nb_runs,gba_bounds=gba_bounds)
 
     parms_list = [gamma,beta,alpha]
     at_bound = mf.check_to_bound(parms_list,bounds=gba_bounds)
@@ -111,7 +116,7 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_drop=True,verbose=False):
+def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_drop=True,nb_runs=1,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
     if conf_drop:
@@ -146,7 +151,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
         # crdm_df.to_csv(fn_domain)
         row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                         gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
-                        verbose=verbose)
+                        nb_runs=nb_runs,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
         # domain_options = df_orig['crdm_domain'].dropna().unique()
@@ -157,14 +162,14 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
             # crdm_df.to_csv(fn_domain)
             row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                             gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
-                            verbose=verbose)
+                            nb_runs=nb_runs,verbose=verbose)
             df_out = pd.concat([df_out,row_df],ignore_index=True)
 
             domain = 'combined'
             print('Working on this domain: {}'.format(domain))
             row_df = estimate_CRDM_by_domain(df_orig,fn,index,subject=subject,df_cols=df_cols,
                             gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
-                            verbose=verbose)
+                            nb_runs=nb_runs,verbose=verbose)
             df_out = pd.concat([df_out,row_df],ignore_index=True)            
 
         counter += 1
@@ -187,7 +192,8 @@ def main():
     conf_drop = True
     if 'ICR' in split_dir:
         conf_drop=False
-    load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,verbose=True)
+    nb_runs = 1000
+    load_estimate_CRDM_save(split_dir=split_dir,conf_drop=conf_drop,nb_runs=nb_runs,verbose=True)
 
 
 if __name__ == "__main__":
