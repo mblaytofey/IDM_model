@@ -92,7 +92,6 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
     if conf_drop:
         print('\n **WARNING** The script will drop confidence responses that are either blank or None\n')
     cdd_files = mf.get_task_files(split_dir=split_dir,new_subjects=new_subjects,task=task)
-    # cdd_files = glob.glob(os.path.join(split_dir,'*/*/*_cdd.csv'))
 
     df_cols = ['subject','task','response_rate','percent_impulse','conf_1','conf_2','conf_3','conf_4',
         'negLL','gamma','kappa','alpha','at_bound','LL','LL0','AIC','BIC','R2','softmax_accuracy',
@@ -145,13 +144,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
 
 
 
