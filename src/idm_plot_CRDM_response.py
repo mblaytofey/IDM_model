@@ -51,8 +51,9 @@ def run_multiple_fits(data,nb_runs=1,gba_bounds=((0,8),(-4.167,4.167),(0.125,4.3
     for run in range(nb_runs):
         # print('Executing run {} of {}'.format(run+1,nb_runs))
         # Estimate gamma, beta, and alpha
-        gba_guess = grab_gba_guess(bounds=gba_bounds)
-        # gba_guess = [0.15, 0.5, 0.6]
+        gba_guess = [0.15, 0.5, 0.6]
+        if nb_runs>1:
+            gba_guess = grab_gba_guess(bounds=gba_bounds)
         negLL_run,gamma_run,beta_run,alpha_run = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,
             disp=False)
         if negLL_run < negLL:
