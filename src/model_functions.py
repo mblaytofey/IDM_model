@@ -138,7 +138,7 @@ def drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=True,verbose=False):
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
         if verbose:
-            print('\n**WARNING** We dropped {0} of {1} non responses that were Nan'.format(non_responses_nb,df_len))
+            print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_len))
         df = df.loc[df['responded'],:].reset_index(drop=True)
     return df,non_responses_nb
 
@@ -466,7 +466,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV_delta,task='cdd',domain='gain',use_alpha=False,verbose=False):
+def store_SV(fn,df,SV_delta,task='cdd',domain='gain',conf_drop=False,use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = '{}_conf_resp.keys'.format(task)
@@ -495,7 +495,18 @@ def store_SV(fn,df,SV_delta,task='cdd',domain='gain',use_alpha=False,verbose=Fal
     # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
     df_out['valence'] = 2.0*df_out[choice_col] - 1.0
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
-    df_out.drop(columns=[conf_resp,choice_col,'valence'],inplace=True)
+    if not conf_drop:
+        # update df_out for missing confidence responses
+        df_out['responded'] = df_out['confidence'].notna()
+        if not df_out['responded'].all():
+            non_responses_nb = df_out['responded'].value_counts()[False]
+            if verbose:
+                print('\n**WARNING** We dropped {0} of {1} CONFIDENCE responses that were left blank, not stored in SV_hat'.format(non_responses_nb,df_out.shape[0]))
+            df_out = df_out.loc[df_out['responded'],:].reset_index(drop=True)
+        df_out = drop_by_str(df_out,col='confidence',match_str='None')[0]
+
+    # .drop(columns=[conf_resp,choice_col,'valence'],inplace=True)
+    df_out = df_out.loc[:,['SV_delta','ambig_trial','confidence']]
     # save_dir = os.path.dirname(split_dir)
     fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:

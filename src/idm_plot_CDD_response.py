@@ -74,9 +74,9 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
     p_choose_reward, SV, fig_fn, choice = mf.plot_save(index,fn,data,parms,task=task,
         ylabel='prob_choose_delay',xlabel='SV difference (SV_delay - SV_immediate)',
         use_alpha=use_alpha,verbose=True)
-    if not conf_drop:
-        # if we keep the trials where there is no confidence measure we cannot store SV_hat for CASANDRE
-        mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,use_alpha=use_alpha)
+    # if not conf_drop:
+    # if we keep the trials where there is no confidence measure we cannot store SV_hat for CASANDRE
+    mf.store_SV(fn,cdd_df,SV_delta=SV,task=task,conf_drop=conf_drop,use_alpha=use_alpha,verbose=verbose)
     LL,LL0,AIC,BIC,R2,correct = mf.GOF_statistics(negLL,choice,p_choose_reward,nb_parms=2)
     p_range = max(p_choose_reward) - min(p_choose_reward)
 
@@ -126,9 +126,9 @@ def main():
     # if running this script on its own, start here
     # split_dir = '/Volumes/UCDN/datasets/IDM/split'
     split_dir = mf.get_split_dir()
-    conf_drop = True
-    if 'ICR' in split_dir:
-        conf_drop=True
+    conf_drop = False
+    # if 'ICR' in split_dir:
+    #     conf_drop=True
     # alpha is set to 1.0
     print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
     load_estimate_CDD_save(split_dir,use_alpha=False,conf_drop=conf_drop,verbose=True)
