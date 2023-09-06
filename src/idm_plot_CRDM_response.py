@@ -148,19 +148,14 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
         # gain is always there
         domain = 'gain'
         crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
-        # fn_domain = fn.replace('.csv','_{}.csv'.format(domain)).replace('split','utility')
-        # crdm_df.to_csv(fn_domain)
         row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                         gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
                         nb_runs=nb_runs,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
-        # domain_options = df_orig['crdm_domain'].dropna().unique()
         if 'loss' in df_orig['crdm_domain'].dropna().unique():
             domain = 'loss'                
             crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
-            # fn_domain = fn.replace('.csv','_{}.csv'.format(domain)).replace('split','utility')
-            # crdm_df.to_csv(fn_domain)
             row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
                             gba_bounds = gba_bounds,domain=domain,task=task,conf_drop=conf_drop,
                             nb_runs=nb_runs,verbose=verbose)
@@ -182,15 +177,10 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_d
 
 
 def main():
-    # if running this script on its own, start here
-    # split_dir = '/Users/pizarror/mturk/idm_data/split'
-    # one time hack
-
     # get paths to directories from the user
     split_dir = mf.get_split_dir()
-    # SDAN_dir = '/Users/pizarror/mturk/idm_data/batch_output/SDAN'
-    # split_dir = '/Users/pizarror/mturk/idm_data/batch_output/bonus2'
     t0 = time.time()
+    # confidence drop set to False. Can set this to True to remove non confidence responses
     conf_drop = False
     # if 'ICR' in split_dir:
     #     conf_drop=False

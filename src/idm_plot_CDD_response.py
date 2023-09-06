@@ -1,6 +1,6 @@
 import pandas as pd
 import os,sys
-import glob
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import model_functions as mf
@@ -123,9 +123,10 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
 
 
 def main():
-    # if running this script on its own, start here
-    # split_dir = '/Volumes/UCDN/datasets/IDM/split'
+    # get paths to directories from the user
     split_dir = mf.get_split_dir()
+    t0 = time.time()
+    # confidence drop set to False. Can set this to True to remove non confidence responses
     conf_drop = False
     # if 'ICR' in split_dir:
     #     conf_drop=True
@@ -137,6 +138,8 @@ def main():
     print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
     print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding CRDM files')
     load_estimate_CDD_save(split_dir, use_alpha=True,conf_drop=conf_drop,verbose=True)
+
+    print('Time to complete CDD modeling with and without alpha : {} minutes'.format((time.time() - t0)/60.0))
 
 
 
