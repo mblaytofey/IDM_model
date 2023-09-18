@@ -491,19 +491,21 @@ def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alph
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)
-    df_out = df_out.astype(float)
-    # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
-    df_out['valence'] = 2.0*df_out[choice_col] - 1.0
-    df_out['confidence'] = df_out[conf_resp]*df_out['valence']
+
     if not conf_drop:
         # update df_out for missing confidence responses
-        df_out['responded'] = df_out['confidence'].notna()
+        df_out['responded'] = df_out[conf_resp].notna()
         if not df_out['responded'].all():
             non_responses_nb = df_out['responded'].value_counts()[False]
             if verbose:
                 print('\n**WARNING** We dropped {0} of {1} CONFIDENCE responses that were left blank, not stored in SV_hat'.format(non_responses_nb,df_out.shape[0]))
             df_out = df_out.loc[df_out['responded'],:].reset_index(drop=True)
-        df_out = drop_by_str(df_out,col='confidence',match_str='None')[0]
+        df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
+
+    df_out = df_out.astype(float)
+    # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
+    df_out['valence'] = 2.0*df_out[choice_col] - 1.0
+    df_out['confidence'] = df_out[conf_resp]*df_out['valence']
 
     # .drop(columns=[conf_resp,choice_col,'valence'],inplace=True)
     df_out = df_out.loc[:,['SV_delta','ambig_trial','confidence']]

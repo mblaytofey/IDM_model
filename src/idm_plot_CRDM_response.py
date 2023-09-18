@@ -117,7 +117,8 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
     
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',conf_drop=True,nb_runs=1,verbose=False):
+def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',
+                            conf_drop=True,nb_runs=1,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
     if conf_drop:

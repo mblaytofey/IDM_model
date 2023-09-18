@@ -37,9 +37,33 @@ def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
         alpha_hat = 1.0
     return alpha_hat
 
+def grab_gk_guess(bounds = ((0,8),(0.0022,7.875))):
+    gamma = np.random.uniform(low=bounds[0][0],high=bounds[0][1])
+    kappa = np.random.uniform(low=bounds[1][0],high=bounds[1][1])
+    
+    return [gamma,kappa]
+
+def run_multiple_fits(data,nb_runs=1,gk_bounds=((0,8),(0.0022,7.875))):
+    # initiate something very small
+    negLL = sys.maxsize
+    for run in range(nb_runs):
+        # print('Executing run {} of {}'.format(run+1,nb_runs))
+        # Estimate gamma and kappa with or without alpha
+        gk_guess = [0.15, 0.5]
+        if nb_runs>1:
+            gk_guess = grab_gk_guess(bounds=gk_bounds)
+        negLL_run,gamma_run,kappa_run = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
+        # negLL_run,gamma_run,beta_run,alpha_run = mf.fit_computational_model(data,guess=gba_guess,bounds=gba_bounds,disp=False)
+        if negLL_run < negLL:
+            # update parameters
+            print('Found better model, will save it.')
+            negLL,gamma,kappa = negLL_run,gamma_run,kappa_run
+    return negLL,gamma,kappa
+
+
 def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',df_cols=[],
                 gk_bounds = ((0,8),(0.0022,7.875)),task='cdd',
-                use_alpha=False,conf_drop=True,verbose=False):
+                use_alpha=False,conf_drop=True,nb_runs=1,verbose=False):
 
     # cdd_df = mf.remap_response(cdd_df,task=task)
     cdd_df = mf.drop_pract(cdd_df,task=task)
@@ -58,9 +82,8 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
 
     cols = ['cdd_choice','cdd_immed_amt','cdd_delay_amt','cdd_immed_wait','cdd_delay_wait','alpha']
     data, percent_impulse = mf.get_data(cdd_df,cols,alpha_hat=alpha_hat,task=task)
-    # Estimate gamma and kappa with or without alpha
-    gk_guess = [0.15, 0.5]
-    negLL,gamma,kappa = mf.fit_computational_model(data,guess=gk_guess,bounds=gk_bounds,disp=False)
+
+    negLL,gamma,kappa = run_multiple_fits(data,nb_runs=nb_runs,gk_bounds=gk_bounds)
 
     parms_list = [gamma,kappa]
     at_bound = mf.check_to_bound(parms_list,bounds=gk_bounds)
@@ -86,7 +109,8 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
     return row_df
 
 # can rewrite in terms of sort, fit, plot, like Corey Z does
-def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,conf_drop=True,verbose=False):
+def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alpha=False,
+                           conf_drop=True,nb_runs=1,verbose=False):
     if verbose:
         print('We are working under /split_dir/ : {}'.format(split_dir))
     if conf_drop:
@@ -114,7 +138,8 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
         cdd_df = pd.read_csv(fn) #index_col=0 intentionally avoided
 
         row_df = estimate_CDD(cdd_df,df_dir,fn,index,batch_name=batch_name,subject=subject,df_cols=df_cols,
-                            gk_bounds=gk_bounds,task=task,use_alpha=use_alpha,conf_drop=conf_drop,verbose=verbose)
+                            gk_bounds=gk_bounds,task=task,use_alpha=use_alpha,nb_runs=nb_runs,
+                            conf_drop=conf_drop,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
     # Save modeled parameters to modeled results
@@ -130,13 +155,14 @@ def main():
     # if 'ICR' in split_dir:
     #     conf_drop=True
     # alpha is set to 1.0
+    nb_runs = 1
     print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
-    load_estimate_CDD_save(split_dir,use_alpha=False,conf_drop=conf_drop,verbose=True)
+    load_estimate_CDD_save(split_dir,use_alpha=False,conf_drop=conf_drop,nb_runs=nb_runs,verbose=True)
 
     # alpha used estimated from CRDM for gain trials
     print('\n>>USE ALPHA<< : Second step model CDD with alpha estimated by CRDM\n')
     print('*NOTE* We will use alpha (risk parameter) for CDD estimated from the corresponding CRDM files')
-    load_estimate_CDD_save(split_dir, use_alpha=True,conf_drop=conf_drop,verbose=True)
+    load_estimate_CDD_save(split_dir, use_alpha=True,conf_drop=conf_drop,nb_runs=nb_runs,verbose=True)
 
     print('Time to complete CDD modeling with and without alpha : {} minutes'.format((time.time() - t0)/60.0))
 
