@@ -155,7 +155,7 @@ def main():
     # if 'ICR' in split_dir:
     #     conf_drop=True
     # alpha is set to 1.0
-    nb_runs = 1
+    nb_runs = 1000
     print('\n>>NO ALPHA<< : First step model CDD with alpha=1\n')
     load_estimate_CDD_save(split_dir,use_alpha=False,conf_drop=conf_drop,nb_runs=nb_runs,verbose=True)
 
