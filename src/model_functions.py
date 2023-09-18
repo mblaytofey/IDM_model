@@ -296,7 +296,7 @@ def function_negLL(parms,data):
 
 
 def extract_data(data,cols=[]):
-    cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
+    # cols = ['crdm_choice','crdm_sure_amt','crdm_lott_amt','crdm_sure_p','crdm_lott_p','crdm_amb_lev']
     data_cols = ()
     for c in cols:
         data_cols += (data[c].T.values.tolist(),)
