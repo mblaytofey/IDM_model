@@ -399,7 +399,7 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
     utility_dir,fig_fn = get_fig_fn(fn,domain=domain,use_alpha=use_alpha)
-    plt = plot_fit(index,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
+    plt = plot_fit(index,parms,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='',task=task)
 
     if verbose:
         plt.title(title,fontsize=15)
@@ -410,16 +410,12 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     return p_choose_reward, SV, fig_fn, choice
 
 # function to plot the fit, can be used independently
-def plot_fit(index,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig',xlabel='SV difference',title=''):
+def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig',xlabel='SV difference',title='',task='crdm'):
     plt.figure(index)
 
-    SV_delta_new = np.linspace(min(SV_delta),max(SV_delta),300)
-    SV_delta_x,p_choose_reward_y = zip(*set(zip(SV_delta, p_choose_reward)))
-    SV_delta_x,p_choose_reward_y = zip(*sorted(zip(SV_delta_x,p_choose_reward_y)))
-    spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_reward_y),k=2)
-    prob_smooth = spl(SV_delta_new)
+    prob_fit,SV_fit = fitted_model(parms,SV_delta,task='crdm')
 
-    plt.plot(SV_delta_new,prob_smooth,'b-',linewidth=0.5)
+    plt.plot(SV_fit,prob_fit,'b-',linewidth=0.5)
     plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
     if choice:
         plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
@@ -433,6 +429,21 @@ def plot_fit(index,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig'
     if title:
         plt.title(title,fontsize=15)
     return plt
+
+def fitted_model(parms,SV_delta,task='crdm'):
+    gamma = parms[0]
+    print(SV_delta)
+    # sys.exit()
+    SV_fit = np.linspace(min(SV_delta),max(SV_delta),300)
+    prob_fit = [prob_softmax(sv,0,gamma=gamma) for sv in SV_fit]
+
+    # SV_delta_x,p_choose_reward_y = zip(*set(zip(SV_delta, p_choose_reward)))
+    # SV_delta_x,p_choose_reward_y = zip(*sorted(zip(SV_delta_x,p_choose_reward_y)))
+    # spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_reward_y),k=2)
+    # prob_smooth = spl(SV_delta_new)
+
+    return prob_fit,SV_fit
+
 
 def make_dir(this_dir,verbose=False):
     if not os.path.exists(this_dir):
