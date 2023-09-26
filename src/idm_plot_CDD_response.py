@@ -65,7 +65,7 @@ def estimate_CDD(cdd_df,df_dir,fn,index,batch_name='batch',subject='joe_shmoe',d
                 gk_bounds = ((0,8),(0.0022,7.875)),task='cdd',
                 use_alpha=False,conf_drop=True,nb_runs=1,verbose=False):
 
-    # cdd_df = mf.remap_response(cdd_df,task=task)
+    cdd_df = mf.remap_response(cdd_df,task=task)
     cdd_df = mf.drop_pract(cdd_df,task=task)
     cdd_df,response_rate = mf.drop_non_responses(cdd_df,task=task,conf_drop=conf_drop,verbose=verbose)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(cdd_df,task=task)
