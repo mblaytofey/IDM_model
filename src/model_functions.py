@@ -5,7 +5,6 @@ import os,sys
 # import scipy as sp
 from scipy.stats import bernoulli
 from scipy import optimize
-from scipy.interpolate import make_interp_spline
 import math
 import matplotlib.pyplot as plt
 
