@@ -167,7 +167,7 @@ def drop_by_str(df,col='crdm_choice',match_str='None'):
 
 # After dropping the blank rows, we can compute confidence distribution
 def conf_distribution(df,task='crdm'):
-    trial_type_col = next(c for c in list(df) if 'trial_type' in c)
+    trial_type_col = '{}_trial_type'.format(task)
     df = df.loc[df[trial_type_col]=='task']
     conf_resp = get_confresp(df,task=task) #'{}_conf_resp.keys'.format(task)
     counts = df[conf_resp].value_counts()
