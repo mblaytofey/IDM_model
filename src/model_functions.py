@@ -260,9 +260,9 @@ def get_task(data):
     # choice_col = next(c for c in cols if ('choice' in c) and ('bonus' not in c))
     # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     # let's check choice column : trial_resp.corr
-    if 'crdm' in cols:
+    if any('crdm' in c for c in cols):
         return 'crdm'
-    elif 'cdd' in cols:
+    elif any('cdd' in c for c in cols):
         return 'cdd'
     else:
         print('We could not find task name from colums : {}'.format(cols))
