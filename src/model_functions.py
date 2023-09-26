@@ -53,6 +53,17 @@ def get_subject(fn,task='crdm'):
         return os.path.basename(fn).replace('_{}.csv'.format(task),'')
 
 
+# confidence responce column has been a moving target. this will help centralize any future fixes if necessary
+def get_confresp(df,task):
+    if '{}_confkey'.format(task) in list(df):
+        return '{}_confkey'.format(task)
+    elif '{}_conf_resp.keys'.format(task) in list(df):
+        return '{}_conf_resp.keys'.format(task)
+    else:
+        print('Whoops could not find confidence response colums: {}'.format(list(df)))
+        print('**EXITING NOW**')
+        sys.exit()
+
 # split dataframe by gains/losses
 def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
     if verbose:
@@ -92,7 +103,8 @@ def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
 
     # get the relevant column names
     keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
-    conf_resp = '{}_conf_resp.keys'.format(task)
+    conf_resp = get_confresp(df,task)
+    # '{}_conf_resp.keys'.format(task)
 
     df,nan_nb = drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=conf_drop,verbose=verbose)
 
@@ -167,8 +179,7 @@ def drop_by_str(df,col='crdm_conf_resp.keys',match_str='None'):
 def conf_distribution(df,task='crdm'):
     trial_type_col = next(c for c in list(df) if 'trial_type' in c)
     df = df.loc[df[trial_type_col]=='task']
-    conf_resp = '{}_conf_resp.keys'.format(task)
-    # conf_resp_keys_col = next(c for c in list(df) if ('conf_resp.keys' in c) and ('pract' not in c))
+    conf_resp = get_confresp(df,task) #'{}_conf_resp.keys'.format(task)
     counts = df[conf_resp].value_counts()
     # initialize at 0
     count_list = [0]*4
@@ -469,7 +480,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
-    conf_resp = '{}_conf_resp.keys'.format(task)
+    conf_resp = get_confresp(df,task)# '{}_conf_resp.keys'.format(task)
     choice_col = '{}_choice'.format(task)
     # resp_corr_col = '{}_trial_resp.corr'.format(task)
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
