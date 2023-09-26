@@ -416,7 +416,7 @@ def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_
     prob_fit,SV_fit = fitted_model(parms,SV_delta,task='crdm')
 
     plt.plot(SV_fit,prob_fit,'b-',linewidth=0.5)
-    plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
+    # plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
     if choice:
         plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
     else:
