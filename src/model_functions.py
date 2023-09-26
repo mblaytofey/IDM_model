@@ -20,7 +20,6 @@ def get_split_dir():
 	split_dir = input('What is the split directory? Where are the task files located?\n')
 	return split_dir
 
-
 # search for task files under split_dir and return the list of files, throw error if nothing found
 def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
     task_files = glob.glob(os.path.join(split_dir,'*/*/*_{}*.csv'.format(task)))
@@ -43,7 +42,6 @@ def get_batch_name(split_dir='/tmp/'):
             batch_name = 'batchity_batch'
             print('**WARNING** Could not determine batch name, will use {}, please check your input dir : {}'.format(batch_name,split_dir))
     return batch_name
-
 
 # simple function to get the subject from the filename for appending to analysis spreadsheet and use as title on plots
 def get_subject(fn,task='crdm'):
@@ -109,15 +107,11 @@ def drop_pract(df,task='crdm'):
 ## this need to have the flexibility to work for both when we have Nan or None 
 ## these two are the options encountered so far
 def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
-
     # original length of df before dropping rows
     df_len = df.shape[0]
-
     # get the relevant column names
     choice_col = get_choicecol(df,task=task)
-    # keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
     conf_resp = get_confresp(df,task=task)
-    # '{}_conf_resp.keys'.format(task)
 
     df,nan_nb = drop_by_nan(df,df_len,choice_col,conf_resp,conf_drop=conf_drop,verbose=verbose)
 
@@ -189,8 +183,6 @@ def conf_distribution(df,task='crdm'):
                 continue
         count_list[int(i)-1]=counts[i]
     return tuple(count_list)
-
-
 
 # We select the columns of interest so we can model with the computational models
 def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
@@ -404,7 +396,6 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     if verbose:
         plt.title(title,fontsize=15)
         print('Saving to : /utility_dir/ {}'.format(utility_dir))
-    # plt.savefig(os.path.join(split_dir,fig_fn))
     plt.savefig(os.path.join(utility_dir,fig_fn),format='eps')
     plt.close(index)
     return p_choose_reward, SV, fig_fn, choice
@@ -414,9 +405,8 @@ def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_
     plt.figure(index)
 
     prob_fit,SV_fit = fitted_model(parms,SV_delta)
-
     plt.plot(SV_fit,prob_fit,'b-',linewidth=0.5)
-    # plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
+
     if choice:
         plt.plot(SV_delta,choice,'r*-',linewidth=0.5)
     else:
@@ -448,7 +438,6 @@ def get_fig_fn(fn,domain='gain',use_alpha=False):
     make_dir(fig_dir)
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
     utility_dir = os.path.dirname(os.path.dirname(fig_dir))
-    # save_dir = os.path.dirname(split_dir)
     fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
         fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
@@ -478,10 +467,8 @@ def count_trial_type(df_col=[],trial_type='task'):
 def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
-    conf_resp = get_confresp(df,task=task)# '{}_conf_resp.keys'.format(task)
+    conf_resp = get_confresp(df,task=task)
     choice_col = get_choicecol(df,task=task)
-    # resp_corr_col = '{}_trial_resp.corr'.format(task)
-    # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
 
     practice_nb = count_trial_type(df_col=df[trial_type_col],trial_type='practice')
     task_nb = count_trial_type(df_col=df[trial_type_col],trial_type='task')
@@ -512,13 +499,10 @@ def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alph
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
 
     df_out = df_out.astype(float)
-    # df_out['confidence'] = df_out[conf_resp]*df_out['SV_delta']/df_out['SV_delta'].abs()
     df_out['valence'] = 2.0*df_out[choice_col] - 1.0
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
 
-    # .drop(columns=[conf_resp,choice_col,'valence'],inplace=True)
     df_out = df_out.loc[:,['SV_delta','ambig_trial','confidence']]
-    # save_dir = os.path.dirname(split_dir)
     fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:
         fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
