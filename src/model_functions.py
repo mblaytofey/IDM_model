@@ -399,7 +399,7 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
     utility_dir,fig_fn = get_fig_fn(fn,domain=domain,use_alpha=use_alpha)
-    plt = plot_fit(index,parms,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='',task=task)
+    plt = plot_fit(index,parms,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
         plt.title(title,fontsize=15)
@@ -410,10 +410,10 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     return p_choose_reward, SV, fig_fn, choice
 
 # function to plot the fit, can be used independently
-def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig',xlabel='SV difference',title='',task='crdm'):
+def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_ambig',xlabel='SV difference',title=''):
     plt.figure(index)
 
-    prob_fit,SV_fit = fitted_model(parms,SV_delta,task='crdm')
+    prob_fit,SV_fit = fitted_model(parms,SV_delta)
 
     plt.plot(SV_fit,prob_fit,'b-',linewidth=0.5)
     # plt.plot(SV_delta,p_choose_reward,'b:',linewidth=1)
@@ -430,7 +430,7 @@ def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_
         plt.title(title,fontsize=15)
     return plt
 
-def fitted_model(parms,SV_delta,task='crdm'):
+def fitted_model(parms,SV_delta):
     gamma = parms[0]
     SV_fit = np.linspace(min(SV_delta),max(SV_delta),300)
     prob_fit = [prob_softmax(sv,0,gamma=gamma) for sv in SV_fit]
