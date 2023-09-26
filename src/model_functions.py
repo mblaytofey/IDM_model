@@ -432,18 +432,9 @@ def plot_fit(index,parms,SV_delta,p_choose_reward,choice=[],ylabel='prob_choose_
 
 def fitted_model(parms,SV_delta,task='crdm'):
     gamma = parms[0]
-    print(SV_delta)
-    # sys.exit()
     SV_fit = np.linspace(min(SV_delta),max(SV_delta),300)
     prob_fit = [prob_softmax(sv,0,gamma=gamma) for sv in SV_fit]
-
-    # SV_delta_x,p_choose_reward_y = zip(*set(zip(SV_delta, p_choose_reward)))
-    # SV_delta_x,p_choose_reward_y = zip(*sorted(zip(SV_delta_x,p_choose_reward_y)))
-    # spl = make_interp_spline(np.array(SV_delta_x),np.array(p_choose_reward_y),k=2)
-    # prob_smooth = spl(SV_delta_new)
-
     return prob_fit,SV_fit
-
 
 def make_dir(this_dir,verbose=False):
     if not os.path.exists(this_dir):
