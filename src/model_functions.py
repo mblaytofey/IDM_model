@@ -54,7 +54,7 @@ def get_subject(fn,task='crdm'):
 
 
 # confidence responce column has been a moving target. this will help centralize any future fixes if necessary
-def get_confresp(df,task):
+def get_confresp(df,task='crdm'):
     if '{}_confkey'.format(task) in list(df):
         return '{}_confkey'.format(task)
     elif '{}_conf_resp.keys'.format(task) in list(df):
@@ -63,6 +63,14 @@ def get_confresp(df,task):
         print('Whoops could not find confidence response colums: {}'.format(list(df)))
         print('**EXITING NOW**')
         sys.exit()
+
+def get_choicecol(df,task='crdm'):
+    if '{}_choice'.format(task) in list(df):
+        return '{}_choice'.format(task)
+    else:
+        print('Could not find choice column, possible older version of psychopy : {}'.format(list(df)))
+        sys.exit()
+
 
 # split dataframe by gains/losses
 def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
@@ -73,15 +81,19 @@ def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
     df = df.loc[df[domain_col]==domain]
     return df
 
-# simple function to remap the responses
+# prefer to use crdm_choice and cdd_choice but catch in case it does not exist
+# simple function to remap the responses if necessary and store into crdm_choice
 def remap_response(df,task='crdm'):
-    # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
-    resp_corr_col = '{}_trial_resp.corr'.format(task)
-    # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
-    # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
-    df_remap = pd.DataFrame({resp_corr_col:[1.0 - r for r in df[resp_corr_col].tolist()]})
-    df.update(df_remap)
-    # df[resp_corr_col] = 1.0 - df[resp_corr_col]
+    if '{}_choice'.format(task) in list(df):
+        return df
+    else:
+        # create task_choice
+        resp_corr_col = '{}_trial_resp.corr'.format(task)
+        resp_key_col = '{}_trial_resp.keys'.format(task)
+        # colum saved as resp.corr = 0 is reward, resp.corr = 1 is null 
+        # want to use as resp.corr = 1 is reward, resp.corr = 0 is null
+        task_choice = [k if math.isnan(k) else 1-c for (c,k) in zip(df[resp_corr_col].values,df[resp_key_col].values)]
+        df['{}_choice'.format(task)] = task_choice
     return df
 
 # simple fucntion to drop practice trials. They are not used
@@ -102,16 +114,17 @@ def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
     df_len = df.shape[0]
 
     # get the relevant column names
-    keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
-    conf_resp = get_confresp(df,task)
+    choice_col = get_choicecol(df,task=task)
+    # keys_cols = [c for c in list(df) if 'trial_resp.keys' in c]
+    conf_resp = get_confresp(df,task=task)
     # '{}_conf_resp.keys'.format(task)
 
-    df,nan_nb = drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=conf_drop,verbose=verbose)
+    df,nan_nb = drop_by_nan(df,df_len,choice_col,conf_resp,conf_drop=conf_drop,verbose=verbose)
 
     if conf_drop:
         df,none_nb = drop_by_str(df,col=conf_resp,match_str='None')
     else:
-        df,none_nb = drop_by_str(df,col=keys_cols[0],match_str='None')
+        df,none_nb = drop_by_str(df,col=choice_col,match_str='None')
 
     # Compute response_rate based on non_responses_nb and None_drops
     response_rate = 1.0 - float(nan_nb+none_nb)/df_len
@@ -121,31 +134,15 @@ def drop_non_responses(df,task='crdm',conf_drop=True,verbose=False):
 
     return df,response_rate
 
-def drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=True,verbose=False):
+def drop_by_nan(df,df_len,choice_col,conf_resp,conf_drop=True,verbose=False):
     # initialized to avoid errors
     non_responses_nb = 0
-    if not keys_cols:
-        print('We found no column with a trial_resp.keys in the name, check .csv file before continuing. These are the columns names:')
-        print(list(df))
-        sys.exit()
     if conf_drop:
         # dropping Nan from response and confidence 
         df['responded'] = df[conf_resp].notna()
-    elif len(keys_cols)==1:
-        # this should be the most common number of keys_cols
-        df['responded'] = df[keys_cols[0]].notna()
-    elif len(keys_cols)==2:
-        # this should be the most common number of keys_cols
-        print('**WARNING** Found two trial_resp.keys : {}'.format(keys_cols))
-        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna()
-    elif len(keys_cols)==3:
-        print('**WARNING** Found three trial_resp.keys : {}'.format(keys_cols))
-        print('We will continue with what we have but check to make sure this is what you want')
-        df['responded'] = df[keys_cols[0]].notna() | df[keys_cols[1]].notna() | df[keys_cols[2]].notna()
     else:
-        print('**ERROR** Found too many trial_resp.keys : {}'.format(keys_cols))
-        print('Check your file and try again')
-        sys.exit()
+        # this should be the most common number of keys_cols
+        df['responded'] = df[choice_col].notna()
 
     if not df['responded'].all():
         non_responses_nb = df['responded'].value_counts()[False]
@@ -157,7 +154,7 @@ def drop_by_nan(df,df_len,keys_cols,conf_resp,conf_drop=True,verbose=False):
 # written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
 # The None shows up as a Nan on my laptop but 'None' in other computers
 # crdm_confkey
-def drop_by_str(df,col='crdm_conf_resp.keys',match_str='None'):
+def drop_by_str(df,col='crdm_choice',match_str='None'):
     drops=0
     if df[ col ].dtype == 'float64':
         return df,drops
@@ -179,7 +176,7 @@ def drop_by_str(df,col='crdm_conf_resp.keys',match_str='None'):
 def conf_distribution(df,task='crdm'):
     trial_type_col = next(c for c in list(df) if 'trial_type' in c)
     df = df.loc[df[trial_type_col]=='task']
-    conf_resp = get_confresp(df,task) #'{}_conf_resp.keys'.format(task)
+    conf_resp = get_confresp(df,task=task) #'{}_conf_resp.keys'.format(task)
     counts = df[conf_resp].value_counts()
     # initialize at 0
     count_list = [0]*4
@@ -214,7 +211,7 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
     # drop rows with NA int them
     data = data.dropna()
 
-    choice_col = '{}_choice'.format(task)
+    choice_col = get_choicecol(df,task=task)
     # resp_corr_col = '{}_trial_resp.corr'.format(task)
     # crdm: percent_safe, cdd: percent_impulse
     percent_null = 1.0 - 1.0*data[choice_col].sum()/data[choice_col].shape[0]
@@ -223,7 +220,7 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
 
 def percent_risk_ambig(df,task='crdm'):
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
-    choice_col = '{}_choice'.format(task)
+    choice_col = get_choicecol(df,task=task)
     # resp_corr_col = '{}_trial_resp.corr'.format(task)
     amb_lev_col = next(c for c in list(df) if 'crdm_amb_lev' in c)
 
@@ -260,15 +257,14 @@ def fit_computational_model(data, guess=[1,0.5,0.6],bounds=((0,8),(1e-8,6.4),(0.
 
 def get_task(data):
     cols = sorted(list(data))
-    choice_col = next(c for c in cols if ('choice' in c) and ('bonus' not in c))
+    # choice_col = next(c for c in cols if ('choice' in c) and ('bonus' not in c))
     # resp_corr_col = next(c for c in cols if 'trial_resp.corr' in c)
     # let's check choice column : trial_resp.corr
-    if 'crdm' in choice_col:
+    if 'crdm' in cols:
         return 'crdm'
-    elif 'cdd' in choice_col:
+    elif 'cdd' in cols:
         return 'cdd'
     else:
-        print(choice_col)
         print('We could not find task name from colums : {}'.format(cols))
         sys.exit()
 
@@ -480,8 +476,8 @@ def count_trial_type(df_col=[],trial_type='task'):
 def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
-    conf_resp = get_confresp(df,task)# '{}_conf_resp.keys'.format(task)
-    choice_col = '{}_choice'.format(task)
+    conf_resp = get_confresp(df,task=task)# '{}_conf_resp.keys'.format(task)
+    choice_col = get_choicecol(df,task=task)
     # resp_corr_col = '{}_trial_resp.corr'.format(task)
     # resp_corr_col = next(c for c in list(df) if 'trial_resp.corr' in c)
 
