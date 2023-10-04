@@ -9,7 +9,7 @@ from idm_split_data import make_dir
 
 def columns_there(df):
     cols_check = ['cdd_choice','cdd_immed_amt','cdd_immed_wait','cdd_delay_amt',
-                  'cdd_delay_wait','cdd_conf_resp.keys']
+                  'cdd_delay_wait']
     for c in cols_check:
         if c not in list(df):
             print('Moving on to next subject, we could not find column : {}'.format(c))
