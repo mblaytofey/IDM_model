@@ -28,10 +28,11 @@ def check_to_bound(gamma,kappa,gk_bounds= ((0,8),(1e-8,6.4))):
 
 def get_alpha_hat(model_dir='/tmp/',batch_name='batch',subject='person1'):
     CRDM_fn = os.path.join(model_dir,'{}_CRDM_analysis.csv'.format(batch_name))
-    if not os.path.exists:
+    try:
+        CRDM_df = pd.read_csv(CRDM_fn,index_col=0)
+    except FileNotFoundError:
         print('**EXITING** Could not find CRDM analysis file : {}'.format(CRDM_fn))
         sys.exit()
-    CRDM_df = pd.read_csv(CRDM_fn,index_col=0)
     # using .loc function to find the alpha value, but still need get item
     try:
         alpha_hat = CRDM_df.loc[(CRDM_df['subject']==subject) & (CRDM_df['domain']=='gain'),'alpha'].item()
