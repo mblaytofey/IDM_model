@@ -466,7 +466,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
-def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alpha=False,verbose=False):
+def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=False,verbose=False):
     # task specific columns
     trial_type_col = '{}_trial_type'.format(task)
     conf_resp = get_confresp(df,task=task)
@@ -505,7 +505,9 @@ def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alph
     df_out['confidence'] = df_out[conf_resp]*df_out['valence']
 
     df_out = df_out.loc[:,['SV_delta','ambig_trial','confidence']]
-    fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
+    fn = fn.replace('split','utility').replace('.csv','_SV_hat.csv')
+    if len(domain)>0:
+        fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:
         fn = fn.replace('_SV_hat.csv','_SV_hat_nlh.csv')
         # fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
