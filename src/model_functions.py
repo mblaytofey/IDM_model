@@ -367,7 +367,7 @@ def check_to_bound(parms,bounds= ((0,8),(1e-8,6.4),(1e-8,6.4))):
     return at_bound
 
 # Function to plot the model fit and the choice data. We plot probability of choice as a function of subjective value
-def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
+def plot_save(index,fn,data,parms,domain='',task='crdm',ylabel='prob_choose_ambig',xlabel='SV difference',use_alpha=False,verbose=False):
     # CDD title, add domain for CRDM
     title = get_subject(fn,task=task)
 
@@ -389,7 +389,7 @@ def plot_save(index,fn,data,parms,domain='gain',task='crdm',ylabel='prob_choose_
     # sorted for plotting
     SV_delta, p_choose_reward, choice = zip(*sorted(zip(SV_delta, p_choose_reward, choice)))
 
-    utility_dir,fig_fn = get_fig_fn(fn,domain=domain,use_alpha=use_alpha)
+    utility_dir,fig_fn = get_fig_fn(fn,domain=domain,use_alpha=use_alpha,task=task)
     plt = plot_fit(index,parms,SV_delta,p_choose_reward,choice=choice,ylabel=ylabel,xlabel=xlabel,title='')
 
     if verbose:
@@ -432,12 +432,14 @@ def make_dir(this_dir,verbose=False):
         os.makedirs(this_dir)
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
-def get_fig_fn(fn,domain='gain',use_alpha=False):
+def get_fig_fn(fn,domain='gain',use_alpha=False,task='crdm'):
     fig_dir = os.path.dirname(fn).replace('split','utility')
     make_dir(fig_dir)
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
     utility_dir = os.path.dirname(os.path.dirname(fig_dir))
-    fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
+    fig_fn = fn.replace(split_dir,'').replace('.csv','_model_fit.eps')[1:]
+    if len(domain)>0:
+        fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
         fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_nlh.eps')
         # fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
