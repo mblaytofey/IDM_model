@@ -439,7 +439,8 @@ def get_fig_fn(fn,domain='gain',use_alpha=False):
     utility_dir = os.path.dirname(os.path.dirname(fig_dir))
     fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
-        fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
+        fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_nlh.eps')
+        # fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
     return utility_dir,fig_fn
 
 # function to count the number of trial types, some data was giving a problem and length was not matching, this is fail safe
@@ -504,7 +505,8 @@ def store_SV(fn,df,SV_delta=[],task='cdd',domain='gain',conf_drop=False,use_alph
     df_out = df_out.loc[:,['SV_delta','ambig_trial','confidence']]
     fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:
-        fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
+        fn = fn.replace('_SV_hat.csv','_SV_hat_nlh.csv')
+        # fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
     if verbose:
         print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
     df_out.to_csv(fn,index=False)

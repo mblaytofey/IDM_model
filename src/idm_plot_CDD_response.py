@@ -132,7 +132,7 @@ def load_estimate_CDD_save(split_dir='/tmp/',new_subjects=[],task='cdd',use_alph
     df_dir = utility_dir
     df_fn = os.path.join(df_dir,'{}_CDD_analysis.csv'.format(batch_name))
     if use_alpha:
-        df_fn = df_fn.replace('.csv','_alpha.csv')
+        df_fn = df_fn.replace('.csv','_nlh.csv')
 
     gk_bounds = ((0,8),(0.0022,7.875))
     for index,fn in enumerate(cdd_files):
