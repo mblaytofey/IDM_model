@@ -432,8 +432,10 @@ def make_dir(this_dir,verbose=False):
         os.makedirs(this_dir)
 
 # Function to produce a filename for the figure, we use the task spreadsheet and change it to a png file
-def get_fig_fn(fn,domain='gain',use_alpha=False,task='crdm'):
+def get_fig_fn(fn,task='cdd',domain='gain',use_alpha=False):
     fig_dir = os.path.dirname(fn).replace('split','utility')
+    if use_alpha:
+        fig_dir = fig_dir.replace(task,'{}_nlh'.format(task))
     make_dir(fig_dir)
     split_dir = os.path.dirname(os.path.dirname(os.path.dirname(fn)))
     utility_dir = os.path.dirname(os.path.dirname(fig_dir))
@@ -509,7 +511,9 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
     if len(domain)>0:
         fn = fn.replace('split','utility').replace('.csv','_{}_SV_hat.csv'.format(domain))
     if use_alpha:
-        fn = fn.replace('_SV_hat.csv','_SV_hat_nlh.csv')
+        fn_dir = os.path.dirname(fn).replace(task,'{}_nlh'.format(task))
+        make_dir(fn_dir)
+        fn = os.path.join(fn_dir,os.path.basename(fn).replace('_SV_hat.csv','_SV_hat_nlh.csv'))
         # fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
     if verbose:
         print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
