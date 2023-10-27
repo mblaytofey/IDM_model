@@ -443,6 +443,7 @@ def get_fig_fn(fn,task='cdd',domain='gain',use_alpha=False):
     if len(domain)>0:
         fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
+        fig_fn = fig_fn.replace('/cdd/','/cdd_nlh/')
         fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_nlh.eps')
         # fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
     return utility_dir,fig_fn
