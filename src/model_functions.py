@@ -444,7 +444,7 @@ def get_fig_fn(fn,task='cdd',domain='gain',use_alpha=False):
         fig_fn = fn.replace(split_dir,'').replace('.csv','_{}_model_fit.eps'.format(domain))[1:]
     if use_alpha:
         fig_fn = fig_fn.replace('/cdd/','/cdd_nlh/')
-        fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_nlh.eps')
+        fig_fn = fig_fn.replace('_model_fit.eps','_nlh_model_fit.eps')
         # fig_fn = fig_fn.replace('_model_fit.eps','_model_fit_alpha.eps')
     return utility_dir,fig_fn
 
@@ -514,7 +514,7 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
     if use_alpha:
         fn_dir = os.path.dirname(fn).replace(task,'{}_nlh'.format(task))
         make_dir(fn_dir)
-        fn = os.path.join(fn_dir,os.path.basename(fn).replace('_SV_hat.csv','_SV_hat_nlh.csv'))
+        fn = os.path.join(fn_dir,os.path.basename(fn).replace('_SV_hat.csv','_nlh_SV_hat.csv'))
         # fn = fn.replace('_SV_hat.csv','_SV_hat_alpha.csv')
     if verbose:
         print('We will save columns of interest from {} file to : {}'.format(task.upper(),fn))
