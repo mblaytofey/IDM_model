@@ -532,13 +532,13 @@ def GOF_statistics(negLL,choice,p_choice,nb_parms=2):
     # Bayesian information criterion
     BIC = -2*LL + 2*math.log(len(p_choice))  #len(results.x)
     #R squared
-    r2 = 1 - LL/LL0
+    R2 = 1 - LL/LL0
 
     #Percent accuracy
     p = np.array(p_choice)
     correct = sum((p>=0.5)==choice)/len(p_choice)                                          
 
-    return LL,LL0,AIC,BIC,r2,correct
+    return LL,LL0,AIC,BIC,R2,correct
 
 # function to save current analysis 
 # if path is there, then append to previous saved analysis
