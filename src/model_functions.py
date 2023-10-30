@@ -83,6 +83,15 @@ def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
 def remap_response(df,task='crdm'):
     if '{}_choice'.format(task) in list(df):
         return df
+    elif task=='cpdm':
+        resp_key_col = '{}_trial_resp.keys'.format(task)
+        # colum saved as resp.keys = ['q','p','a','l'] :: [-2,2,-1,1]
+        # 1/2 distinguish low/high confidence
+        # +/- distinguish left and right orientation
+        choice_dict = {'q':-2,'p':2,'a':-1,'l':1}
+        # create task_choice
+        task_choice = [c if math.isnan(c) else choice_dict[c] for c in df[resp_corr_col].values]
+        df['{}_choice'.format(task)] = task_choice
     else:
         # create task_choice
         resp_corr_col = '{}_trial_resp.corr'.format(task)
