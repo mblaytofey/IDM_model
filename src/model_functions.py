@@ -28,7 +28,7 @@ def get_task_files(split_dir='/tmp/',new_subjects=[],task='crdm'):
     if not task_files:
         print('\n\n***ERROR***\nThe path to split_dir did not have any .csv files for analysis.\n\n')
         print('Check input path again and rerun script : {}'.format(split_dir))
-        sys.exit()        
+        sys.exit()
     return sorted(task_files)
 
 def get_batch_name(split_dir='/tmp/'):
@@ -52,6 +52,8 @@ def get_subject(fn,task='crdm'):
 
 # confidence responce column has been a moving target. this will help centralize any future fixes if necessary
 def get_confresp(df,task='crdm'):
+    if 'cpdm' in task:
+        return '{}_conf'.format(task)
     if '{}_confkey'.format(task) in list(df):
         return '{}_confkey'.format(task)
     elif '{}_conf_resp.keys'.format(task) in list(df):
@@ -90,9 +92,7 @@ def remap_response(df,task='crdm'):
         # +/- distinguish left and right orientation
         choice_dict = {'q':-2,'p':2,'a':-1,'l':1}
         # create task_choice
-        print(df[resp_key_col].values)
-        task_choice = [c if len(c)==0 else choice_dict[c] for c in df[resp_key_col].values]
-        df['{}_choice'.format(task)] = task_choice
+        df['{}_choice'.format(task)] = df[resp_key_col].replace(choice_dict)
     else:
         # create task_choice
         resp_corr_col = '{}_trial_resp.corr'.format(task)
@@ -265,6 +265,8 @@ def get_task(data):
         return 'crdm'
     elif any('cdd' in c for c in cols):
         return 'cdd'
+    elif any('cpdm' in c for c in cols):
+        return 'cpdm'
     else:
         print('We could not find task name from colums : {}'.format(cols))
         sys.exit()
