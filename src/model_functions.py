@@ -90,7 +90,7 @@ def remap_response(df,task='crdm'):
         # +/- distinguish left and right orientation
         choice_dict = {'q':-2,'p':2,'a':-1,'l':1}
         # create task_choice
-        task_choice = [c if math.isnan(c) else choice_dict[c] for c in df[resp_corr_col].values]
+        task_choice = [c if math.isnan(c) else choice_dict[c] for c in df[resp_key_col].values]
         df['{}_choice'.format(task)] = task_choice
     else:
         # create task_choice
