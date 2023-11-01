@@ -72,7 +72,7 @@ def get_choicecol(df,task='crdm'):
 
 
 # split dataframe by gains/losses
-def get_by_domain(df,domain='gain',task='crdm',verbose='False'):
+def get_by_domain(df,domain='gain',task='crdm',verbose=False):
     if verbose:
         print('Working on this domain: {}'.format(domain))
     # select by domain: gain/loss
