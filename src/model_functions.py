@@ -81,8 +81,6 @@ def get_by_domain(df,domain='gain',task='crdm',verbose=False):
         df = df.loc[df[safe_col]>0]
     elif domain=='loss':
         df = df.loc[df[safe_col]<0]
-    # domain_col = '{}_domain'.format(task)
-    # df = df.loc[df[domain_col]==domain]
     return df
 
 # prefer to use crdm_choice and cdd_choice but catch in case it does not exist
