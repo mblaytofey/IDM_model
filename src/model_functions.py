@@ -109,7 +109,7 @@ def remap_response(df,task='crdm'):
 # simple fucntion to drop practice trials. They are not used
 def drop_pract(df,task='crdm'):
     trial_type_col = '{}_trial_type'.format(task)
-    df = df.loc[df[trial_type_col]=='task']
+    df = df.loc[df[trial_type_col].str.contains('task')]
     cols = [c for c in list(df) if 'pract' not in c]
     df = df[cols]
     return df
