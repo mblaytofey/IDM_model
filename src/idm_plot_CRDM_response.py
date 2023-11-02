@@ -154,7 +154,7 @@ def load_estimate_CRDM_save(split_dir='/tmp/',new_subjects=[],task='crdm',
                         nb_runs=nb_runs,verbose=verbose)
         df_out = pd.concat([df_out,row_df],ignore_index=True)
 
-        if 'loss' in df_orig['crdm_domain'].dropna().unique():
+        if (df_orig['crdm_sure_amt'].values < 0).any():
             domain = 'loss'                
             crdm_df = mf.get_by_domain(df_orig,domain=domain,task=task,verbose=True)
             row_df = estimate_CRDM_by_domain(crdm_df,fn,index,subject=subject,df_cols=df_cols,
