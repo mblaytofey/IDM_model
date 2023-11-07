@@ -67,8 +67,8 @@ def estimate_CRDM_by_domain(crdm_df,fn,index,subject='joe_shmoe',df_cols=[],
                             domain='gain',task='crdm',conf_drop=True,nb_runs=1,verbose=False):
     
     crdm_df = mf.remap_response(crdm_df,task=task)
-    crdm_df = mf.drop_pract(crdm_df,task=task)
     crdm_df,response_rate = mf.drop_non_responses(crdm_df,task=task,conf_drop=conf_drop,verbose=verbose)
+    crdm_df = mf.drop_pract(crdm_df,task=task)
     conf_1,conf_2,conf_3,conf_4 = mf.conf_distribution(crdm_df,task=task)
     if response_rate < 0.05:
         print('**ERROR** Low response rate, cannot model this subjects CRDM data')
