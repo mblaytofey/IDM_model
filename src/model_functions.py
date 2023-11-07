@@ -56,6 +56,8 @@ def get_confresp(df,task='crdm'):
         return '{}_conf'.format(task)
     if '{}_confkey'.format(task) in list(df):
         return '{}_confkey'.format(task)
+    elif '{}_conf'.format(task) in list(df):
+        return '{}_conf'.format(task)
     elif '{}_conf_resp.keys'.format(task) in list(df):
         return '{}_conf_resp.keys'.format(task)
     else:
