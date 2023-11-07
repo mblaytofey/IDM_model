@@ -519,6 +519,8 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
                 print('\n**WARNING** We dropped {0} of {1} CONFIDENCE responses that were left blank, not stored in SV_hat'.format(non_responses_nb,df_out.shape[0]))
             df_out = df_out.loc[df_out['responded'],:].reset_index(drop=True)
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
+        # string [] showing up for SDM in the conf_resp column
+        df_out = drop_by_str(df_out,col=conf_resp,match_str='[]')[0]
 
     df_out = df_out.astype(float)
     df_out['valence'] = 2.0*df_out[choice_col] - 1.0
