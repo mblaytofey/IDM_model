@@ -518,8 +518,8 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)
-    if square_bracket(df_out,col=conf_resp):
-        df_out = df.loc[df[trial_type_col]=='task',[conf_resp,'crdm_conf_resp.rt',choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)    
+    # if square_bracket(df_out,col=conf_resp):
+    #     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,'crdm_conf_resp.rt',choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)    
 
     if not conf_drop:
         # initialized to avoid errors
@@ -532,10 +532,10 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
                 print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_out_len))
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
         # string [] showing up for SDM in the conf_resp column
-        if square_bracket(df_out,col=conf_resp):
-            print(df_out[conf_resp])
-            df_out = df_out.dropna(subset=['crdm_conf_resp.rt']).reset_index(drop=True)
-            print(df_out[conf_resp])
+        # if square_bracket(df_out,col=conf_resp):
+        #     print(df_out[conf_resp])
+        #     df_out = df_out.dropna(subset=['crdm_conf_resp.rt']).reset_index(drop=True)
+        #     print(df_out[conf_resp])
         
 
     df_out = df_out.astype(float)
