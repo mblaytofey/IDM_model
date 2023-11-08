@@ -151,7 +151,6 @@ def drop_by_nan(df,df_len,choice_col,conf_resp,conf_drop=True,verbose=False):
     else:
         # this should be the most common number of keys_cols
         df = df.dropna(subset=[choice_col])
-        
     non_responses_nb = df_len - df.shape[0]
 
     if non_responses_nb > 0:
@@ -483,6 +482,16 @@ def count_trial_type(df_col=[],trial_type='task'):
 
     return trial_type_nb
 
+# special function written just for SDM as a [] started showing up in the crdm_conf column
+def square_bracket(df_out,col=''):
+    counts = df_out[col].value_counts()
+    # initialize at 0
+    count_list = [0]*4
+    for i in counts.index:
+        if type(i) is str:
+            if i in ['[]']:
+                return True
+    return False
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
@@ -509,18 +518,25 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
         print('We found a ValueError, please inspect spreadsheet and try again')
         sys.exit()
     df_out = df.loc[df[trial_type_col]=='task',[conf_resp,choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)
+    if square_bracket(df_out,col=conf_resp):
+        df_out = df.loc[df[trial_type_col]=='task',[conf_resp,'crdm_conf_resp.rt',choice_col,'SV_delta','ambig_trial']].reset_index(drop=True)    
 
     if not conf_drop:
-        # update df_out for missing confidence responses
-        df_out['responded'] = df_out[conf_resp].notna()
-        if not df_out['responded'].all():
-            non_responses_nb = df_out['responded'].value_counts()[False]
+        # initialized to avoid errors
+        df_out_len = df_out.shape[0]
+        # dropping Nan from response and confidence 
+        df_out = df_out.dropna(subset=[conf_resp]).reset_index(drop=True)
+        non_responses_nb = df_out_len - df_out.shape[0]
+        if non_responses_nb > 0:
             if verbose:
-                print('\n**WARNING** We dropped {0} of {1} CONFIDENCE responses that were left blank, not stored in SV_hat'.format(non_responses_nb,df_out.shape[0]))
-            df_out = df_out.loc[df_out['responded'],:].reset_index(drop=True)
+                print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_out_len))
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
         # string [] showing up for SDM in the conf_resp column
-        df_out = drop_by_str(df_out,col=conf_resp,match_str='[]')[0]
+        if square_bracket(df_out,col=conf_resp):
+            print(df_out[conf_resp])
+            df_out = df_out.dropna(subset=['crdm_conf_resp.rt']).reset_index(drop=True)
+            print(df_out[conf_resp])
+        
 
     df_out = df_out.astype(float)
     df_out['valence'] = 2.0*df_out[choice_col] - 1.0
