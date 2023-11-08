@@ -147,16 +147,16 @@ def drop_by_nan(df,df_len,choice_col,conf_resp,conf_drop=True,verbose=False):
     non_responses_nb = 0
     if conf_drop:
         # dropping Nan from response and confidence 
-        df['responded'] = df[conf_resp].notna()
+        df = df.dropna(subset=[conf_resp])
     else:
         # this should be the most common number of keys_cols
-        df['responded'] = df[choice_col].notna()
+        df = df.dropna(subset=[choice_col])
+        
+    non_responses_nb = df_len - df.shape[0]
 
-    if not df['responded'].all():
-        non_responses_nb = df['responded'].value_counts()[False]
+    if non_responses_nb > 0:
         if verbose:
             print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_len))
-        df = df.loc[df['responded'],:].reset_index(drop=True)
     return df,non_responses_nb
 
 # written for SDAN data, when None started appearing instead of empty or Nan, can match any string, default to 'None'
