@@ -482,7 +482,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 
     return trial_type_nb
 
-# special function written just for SDM as a [] started showing up in the crdm_conf column
+# special function written for SDM as a [] started showing up in the crdm_conf column
 def square_bracket(df_out,col=''):
     counts = df_out[col].value_counts()
     # initialize at 0
@@ -494,7 +494,7 @@ def square_bracket(df_out,col=''):
     return False
 
 def remove_brackets(df_out,col=''):
-    # if there are not square brackets just return
+    # if there are no square brackets just return
     if not square_bracket(df_out,col=col):
         return df_out
     bracket_index = []
