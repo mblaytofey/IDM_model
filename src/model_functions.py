@@ -494,6 +494,9 @@ def square_bracket(df_out,col=''):
     return False
 
 def remove_brackets(df_out,col=''):
+    # if there are not square brackets just return
+    if not square_bracket(df_out,col=col):
+        return df_out
     bracket_index = []
     for i,v in enumerate(df_out[col].values):
         if str(v) in '[]':
@@ -541,8 +544,7 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
                 print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_out_len))
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
         # string [] showing up for SDM in the conf_resp column
-        if square_bracket(df_out,col=conf_resp):
-            df_out = remove_brackets(df_out,col=conf_resp)
+        df_out = remove_brackets(df_out,col=conf_resp)
         
 
     df_out = df_out.astype(float)
