@@ -14,7 +14,9 @@ If you are unfamiliar with Python and conda environments, please refer to our [C
 
 ## 1. Clone the repository:
 
-- Git clone IDM_model: Inside the IDM_project directory, clone the IDM_model repository 
+- Git clone IDM_model: Use the terminal and navigate to the IDM folder in the home directory and clone the IDM_model repository
+
+    `$ cd ~/IDM`
 
     `$ git clone https://github.com/CDN-Lab/IDM_model `
 
