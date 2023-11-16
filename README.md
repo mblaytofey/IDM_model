@@ -12,7 +12,7 @@ We adapted the code to separate the two items above so we could analyze the CRDM
 
 If you are unfamiliar with Python and conda environments, please refer to our [CPU_support](https://github.com/CDN-Lab/CPU_support) repository. There you will find more details to help you get started with Python.
 
-## 1. Clone the repository:
+## 1a. Clone the repository:
 
 - Git clone IDM_model: Use the terminal and navigate to the IDM folder in the home directory and clone the IDM_model repository
 
@@ -21,6 +21,15 @@ If you are unfamiliar with Python and conda environments, please refer to our [C
     `$ git clone https://github.com/CDN-Lab/IDM_model `
 
     `$ cd IDM_model/src`
+
+## 1b. Git pull the repository:
+
+- If you have already cloned the repository, you should navigate to the folder and run a git pull to refresh any changes on the script. Read the output to see if any cahnges have taken place or not.
+
+    `$ cd ~/IDM/IDM_model/`
+
+    `$ git pull`
+
 
 ## 2a. Run CRDM or CDD independently:
 
