@@ -213,8 +213,9 @@ def get_data(df,cols,alpha_hat=1.0,domain='gain',task='crdm'):
 
     # select from columns
     data = df[cols]
-    # drop rows with NA int them
-    data = data.dropna()
+    # drop rows with NA in them
+    if 'cpdm' not in task:
+        data = data.dropna()
 
     choice_col = get_choicecol(df,task=task)
     # resp_corr_col = '{}_trial_resp.corr'.format(task)
