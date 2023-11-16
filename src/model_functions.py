@@ -483,7 +483,7 @@ def count_trial_type(df_col=[],trial_type='task'):
 
     return trial_type_nb
 
-# special function written just for SDM as a [] started showing up in the crdm_conf column
+# special function written for SDM as a [] started showing up in the crdm_conf column
 def square_bracket(df_out,col=''):
     counts = df_out[col].value_counts()
     # initialize at 0
@@ -493,6 +493,18 @@ def square_bracket(df_out,col=''):
             if i in ['[]']:
                 return True
     return False
+
+def remove_brackets(df_out,col=''):
+    # if there are no square brackets just return
+    if not square_bracket(df_out,col=col):
+        return df_out
+    bracket_index = []
+    for i,v in enumerate(df_out[col].values):
+        if str(v) in '[]':
+            bracket_index += [i]
+    df_out = df_out.drop(bracket_index,axis='index').reset_index(drop=True)
+    return df_out
+
 # written generically for task so we can use for CDD and CRDM
 # This will save two columns for each subject: confidence and SV_delta
 # These outputs will be used by Corey Zimba for modeling confidence
@@ -533,10 +545,7 @@ def store_SV(fn,df,SV_delta=[],domain='',task='cdd',conf_drop=False,use_alpha=Fa
                 print('\n**WARNING** We dropped {0} of {1} CHOICE responses that were Nan'.format(non_responses_nb,df_out_len))
         df_out = drop_by_str(df_out,col=conf_resp,match_str='None')[0]
         # string [] showing up for SDM in the conf_resp column
-        # if square_bracket(df_out,col=conf_resp):
-        #     print(df_out[conf_resp])
-        #     df_out = df_out.dropna(subset=['crdm_conf_resp.rt']).reset_index(drop=True)
-        #     print(df_out[conf_resp])
+        df_out = remove_brackets(df_out,col=conf_resp)
         
 
     df_out = df_out.astype(float)

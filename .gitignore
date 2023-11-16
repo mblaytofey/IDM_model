@@ -1,4 +1,5 @@
 # ignore the file literally named .DS_Store
 .DS_Store
+scratch.ipynb
 __pycache__
 
